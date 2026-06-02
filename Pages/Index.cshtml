@@ -1,0 +1,571 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Appointments";
+}
+
+@* @model CAP.DataBase.Entities.Event *@
+@using Microsoft.AspNetCore.Http
+@* @inject IHttpContextAccessor HttpContextAccessor *@
+@{
+    ViewBag.Title = "Calendar";
+    var s = "";
+    // var userObj = HttpContextAccessor.HttpContext.Session.GetObjectFromJson<EmployeeDetails>("EmployeeDetails");
+    // if (userObj != null && userObj.IsAdmin) { s = "admin"; }
+    // else if (userObj != null && userObj.IsReadOnly) { s = "readonly"; }
+}
+<h3 style="text-align: center; font-size: 25px">Appointments Calendar</h3>
+<form id="frm" name="frm" method="post">
+<table>
+    <tr>
+    <td style="vertical-align:top;width:10%;padding:5px;">
+        <table style="margin: 5px; background-color:lightgoldenrodyellow;">
+                <tr><td colspan="2" style="font-weight:bold; color: #336699;"><h4>Select Appointment Criteria</h4></td></tr>
+            <tr><td><label id="lblDate">Date:</label></td><td><input type="month" id="dtpSelector" name="lblDate" required="required" value="@Model.lblDate" /></td></tr>
+                <tr>
+                    <td><label id="lblResident">Resident:</label></td>
+                    <td>
+                        <input type="hidden" id="hdnResident" name="hdnResident" value="@Model.hdnResident" />
+                        <input type="text" list="dlResident" id="txtResident" name="txtResident" value="@Model.txtResident" autocomplete="off" onchange="ChangeFilter(this);" />
+                <datalist id="dlResident" name="lblResident">
+                <option value="" label="Please Select" />            
+                @foreach(var res in Model.lstResidents)
+                            {
+                                <option value="@res.ResidentKey" label="@res.FullName" />
+                            }
+                 </datalist>
+                    </td></tr>
+                <tr>
+                    <td><label id="lblDoctor">Doctor:</label></td>
+                    <td>
+                        <input type="hidden" id="hdnDoctor" name="hdnDoctor" value="@Model.hdnDoctor" />
+                        <input type="text" list="dlDoctor" id="txtDoctor" name="txtDoctor" value="@Model.txtDoctor" autocomplete="off" onchange="ChangeFilter(this);" />
+                <datalist id="dlDoctor" name="lblDoctor" >
+                            <option value="" label="Please Select" />
+                            @foreach (var res in Model.lstDoctors)
+                            {
+                                <option value="@res.DoctorKey" label="@res.DoctorName" />
+                            }
+                        </datalist>
+            </td></tr>
+            <tr><td><label id="lblApptType">Type:</label></td><td><select id="cmbApptType" name="cmbApptType" >
+                            <option value="" >Please Select</option>
+                            @foreach (var res in Model.lstAppointmentTypes)
+                            {
+                                    if(Model.cmbApptType == res.Type)
+                                    {
+                                        <option value="@res.Type" selected>@res.Type</option>
+                                    }
+                                    else {
+                                        <option value="@res.Type">@res.Type</option>
+                                    }
+                            }
+                            </select>
+            </td></tr>
+@*             <tr><td><label id="lblAuditOnly">Audit Only:</label></td><td><input type="checkbox" id="chkAuditOnly" name="lblAuditOnly" /></td></tr>
+ *@            <tr><td colspan="2" align="center"><input type="submit" id="btnSearch" class="btn btn-primary" value="Search" />&nbsp;&nbsp;&nbsp;
+                            <input type="button" class="btn btn-secondary" id="btnReset" value="Reset" onclick="clearFilter();" />
+                        </td>
+                    </tr>
+        </table>
+    </td>
+        <td><div id="calendar" style="padding: 5px;"></div></td>
+    </tr>
+</table>
+</form>
+
+
+<div id="myModal" class="modal fade" role="dialog" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle" class="modal-title fs-5" >New Appointment</h2>
+                @* <button type="button" class="close" data-bs-dismiss="modal">&times;</button> *@
+             </div>
+                <div class="modal-body">
+                <form id="frmAddEdit" name="frmAddEdit" class="col-md-12 form-horizontal">
+                    <input type="hidden" id="hdnEventID" name="hdnEventID" value="" />
+                    <table class="table table-borderless">
+                        <tr>
+                            <td style="padding:10px; align-content:flex-end;">Date:</td><td style ="padding:10px; align-content:flex-start;"><input type="date" id="txtMDate" name="txtDate" class="form-control" /></td>
+                            <td style="padding:10px; align-content:flex-end;">Time:</td>
+                            <td style="padding:10px; align-content:flex-start;"><input type="time" id="txtMTime" name="txtTime" step="1800" class="form-control" /></td>
+                         </tr>
+                         <tr>
+                            <td style="padding:10px; align-content:flex-end;">Resident:</td>
+                            <td style="padding:10px; align-content:flex-start;">
+                                <input type="hidden" id="hdnMRes" name="hdnMRes" value="" />
+                                <input type="text" id="txtMRes" list="dlMRes" name="txtRes" class="form-control" onchange="ChangeFilter(this);" />
+                                <datalist id="dlMRes" name="lblMRes">
+                                    @foreach (var res in Model.lstResidents)
+                                    {
+                                        <option value="@res.ResidentKey" label="@res.FullName" />
+                                    }
+                                </datalist>
+                            </td>
+                            <td style="padding:10px; align-content:flex-end;">Status:</td>
+                            <td style="padding:10px; align-content:flex-start;">
+                                <select id="cmbMStatus" name="cmbMStatus" class="form-control" >
+                                    <option value="Booked" label="Booked" />
+                                    <option value="Cancelled" label="Cancelled" />
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="padding:10px; align-content:flex-end;">Doctor:</td>
+                            <td style="padding:10px; align-content:flex-start;">
+                                <input type="hidden" id="hdnMDoc" name="hdnMDoc" value=""  />
+                                <input type="text" id="txtMDoc" name="txtMDoc" list="dlMDoc" class="form-control" onchange="ChangeFilter(this); changeDoctor($('#hdnMDoc').val());" />
+                                <datalist id="dlMDoc" name="lblMDoc">
+                                    @foreach (var res in Model.lstDoctors)
+                                    {
+                                        <option value="@res.DoctorKey" label="@res.DoctorName" />
+                                    }
+                                </datalist>
+                            </td>
+                            <td style="padding:10px; align-content:flex-end;">Specialty:</td>
+                            <td style="padding:10px; align-content:flex-start;"><label id="lblMSpecialty" name="lblMSpecialty" class="form-control" ></label></td>
+                        </tr>
+                        <tr>
+                            <td style="padding:10px; align-content:flex-end;">Address:</td>
+                            <td style="padding:10px; align-content:flex-start;">
+                                <select id="cmbMAddr" name="cmbMAddr" class="form-control" onchange="changeLocation(this.value);"></select>
+                            </td>
+                            <td style="padding:10px; align-content:flex-end;">City:</td>
+                            <td style="padding:10px; align-content:flex-start;"><label id="lblMCity" name="lblMCity" class="form-control" /></td>
+                        </tr>
+                        <tr>
+                            <td style="padding:10px; align-content:flex-end;">Phone:</td>
+                            <td style="padding:10px; align-content:flex-start;"><label id="lblMPhone" name="lblMPhone" class="form-control" /></td></td>
+                            <td style="padding:10px; align-content:flex-end;">Fax:</td>
+                            <td style="padding:10px; align-content:flex-start;"><label id="lblMFax" name="lblMFax" class="form-control" /></td>
+                        </tr>
+                        <tr>
+                            <td style="padding:10px; align-content:flex-end;">Driver:</td>
+                            <td style="padding:10px; align-content:flex-start;">
+                                <input type="hidden" id="hdnMDriver" name="hdnMDriver" value="" />
+                                <input type="text" id="txtMDriver" name="txtMDriver" list="dlMDriver" class="form-control" onchange="ChangeFilter(this);" />
+                                <datalist id="dlMDriver" name="lblMDriver">
+                                    @foreach (var res in Model.lstDrivers)
+                                    {
+                                        <option value="@res.DriverID" label="@res.DriverName" />
+                                    }
+                                </datalist>
+                            </td>
+                            <td style="padding:10px; align-content:flex-end;">Pick up:</td>
+                            <td style="padding:10px; align-content:flex-start;"><input type="time" id="txtMPickup" name="txtPickup" step="1800" class="form-control" /></td>
+                        </tr>
+                        <tr><td colspan="4">&nbsp;</td></tr>
+                        <tr>
+                            <td><label id="lblMPrep">Prep:</label></td>
+                            <td>
+                                <select id="cmbMPrep" name="cmbMPrep">
+                                    @foreach (var res in Model.lstPreps )
+                                    {
+                                            <option value="@res.PrepID">@res.PrepName</option>
+                                    }
+                                </select>
+                            </td>
+                            <td><label id="lblMApptType">Appt Type:</label></td>
+                            <td>
+                                <select id="cmbMApptType" name="cmbMApptType">
+                                    @foreach (var res in Model.lstAppointmentTypes)
+                                    {
+                                        if (Model.cmbApptType == res.Type)
+                                        {
+                                            <option value="@res.Type" selected>@res.Type</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@res.Type">@res.Type</option>
+                                        }
+                                    }
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><label id="lblMNotes">Notes:</label></td>
+                            <td colspan="3"><textarea id="txtMNotes" name="txtMNotes" class="form-control" rows="3"></textarea></td>
+                        </tr>
+                    </table>
+                    <table style="width:100%; border-top:1px solid #dee2e6; margin-top:10px;">
+                        <tr>
+                            <td>
+                                <div class="modal-sm" id="divEdit" style="vertical-align:top;">
+                                    Modified on:&nbsp;<label id="lblMEditDate"></label>&nbsp;&nbsp;by:&nbsp;<label id="lblMEditBy"></label><br />
+                                    Created on:&nbsp;<label id="lblMCreateDate"></label>&nbsp;&nbsp;by:&nbsp;<label id="lblMCreateBy"></label>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="modal-static">
+                                    <button type="button" id="btnSave" class="btn btn-primary">Save</button>
+                                    <button type="button" id="cmdDelete" class="btn btn-primary" data-bs-dismiss="modal" onclick="deleteAppointment(); clearForm();">Delete</button>
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="clearForm();">Close</button>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+
+            </form>
+        </div>
+
+        </div>
+    </div>
+ </div>
+
+<link href="//cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.4.0/fullcalendar.min.css" rel="stylesheet" />
+<link href="//cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.4.0/fullcalendar.print.css" rel="stylesheet" media="print" />
+<link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.47/css/bootstrap-datetimepicker.min.css" rel="stylesheet" />
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.4.0/fullcalendar.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.47/js/bootstrap-datetimepicker.min.js"></script>
+    <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+
+    @*    @section Scripts {
+     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+<link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="//cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.4.0/fullcalendar.min.css" rel="stylesheet" />
+    <link href="//cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.4.0/fullcalendar.print.css" rel="stylesheet" media="print" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.47/css/bootstrap-datetimepicker.min.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.4.0/fullcalendar.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.47/js/bootstrap-datetimepicker.min.js"></script>
+    <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css" />
+    <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script> 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">*@
+
+    <script src="~/js/site.js"></script>
+    
+    <script>
+        var appts = [];
+        $(document).ready(function () {
+            let date = new Date();
+            let month = date.getMonth() + 1;
+            let year = date.getFullYear();
+
+            @if(Model.lblDate == null || Model.lblDate.Trim().Length != 7) { <text>SetCurrentDateToSelector();FetchEventAndRenderCalendar(year, month);</text> }
+            else { <text>FetchEventAndRenderCalendar(@Model.lblDate.Substring(0,4), @Model.lblDate.Substring(5,2));</text> }
+            
+            function FetchEventAndRenderCalendar(year, month) {
+                $.ajax({
+                    type: "GET",
+                    url: "Index?handler=GetAppointments",
+                   // data: { },
+                    success: function (data) {
+                        appts = [];
+                        $.each(data, function (i, v) {
+                            appts.push({
+                                eventID: v.eventID,
+                                title: v.subject,
+                                description: v.description,
+                                start: moment(v.start),
+                                end: null,
+                                color: v.themeColor,
+                                allDay: v.isFullDay
+                            });
+                        });
+                        GenerateCalendar(appts, new Date(year, month - 1));
+                    },
+                    error: function (error) {
+                        alert(error.responseText.substring(0, error.responseText.indexOf('\n')).replace("System.SystemException:", ""));
+                    }
+               });
+            }
+
+            function SetCurrentDateToSelector() {
+                let date = new Date();
+                let month = date.getMonth() + 1;
+                let year = date.getFullYear();
+
+                if (month < 10) month = "0" + month;
+
+                var today = year + "-" + month;
+                $('#dtpSelector').val(today);
+            }
+     //             this.textBox1.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
+     // this.textBox1.AutoCompleteSource = AutoCompleteSource.CustomSource;
+   
+             var sCust = "";
+            function GenerateCalendar(appts, date) {
+                var sView = "month"; 
+                if ($('#calendar').fullCalendar('getCalendar').view) {
+                    //if (appts.buttonText == 'month') { sView = 'month'; alert(sView); }
+                    //else {
+                    /*alert("cur cust - " + sCust);*/
+                    if (sCust == "") { sView = $('#calendar').fullCalendar('getCalendar').view.name; }
+                    else sCust = "";
+                    //}
+                    
+                }
+                $('#calendar').fullCalendar('destroy');
+                $('#calendar').fullCalendar({
+                    contentHeight: 600,
+                    contentWidth: 1630,
+                    defaultDate: date,
+                    timeFormat: 'h(:mm)a',
+                    displayEventTime: false,
+                    defaultView: sView,
+                    customButtons: {
+                        today: {
+                            text: 'today',
+                            click: function () {
+                                let date = new Date();
+                                $('#calendar').fullCalendar('gotoDate', date);
+                                SetCurrentDateToSelector();
+                                    $('#btnSearch').click();
+                                // FetchEventAndRenderCalendar(date.getFullYear(), date.getMonth() + 1);
+                            }
+                        },
+                        month: {
+                            text: 'month',
+                            click: function () {
+                                let date = $('#calendar').fullCalendar('getDate');
+                                /*alert('cust'); */sCust = "cust";
+                                sView = 'month';
+                                updateYearMonth();
+                                //$('#calendar').fullCalendar('getCalendar').defaultView = 'month';
+                                //FetchEventAndRenderCalendar(date._d.getFullYear(), date._d.getMonth() + 2);
+                            }
+                        },
+                    },
+                    header: {
+                        left: 'prev,next,today',
+                        center: 'title',
+                        right: 'month,listMonth'     /* ,basicWeek,basicDay */
+                    },
+                    eventLimit: 100,
+                   // eventColor: '#378006',
+                    eventRender: function (event, element, view) {
+                        var title = "";
+                        if (typeof element.find('.fc-title')[0] === 'object') {
+                            let title = element.find('.fc-title')[0].textContent;
+                            element.find('.fc-title')[0].textContent = "";
+                            element.find('.fc-title').append(title);
+                        }
+                        if (typeof element.find('.fc-list-item-title') === 'object') {
+                            event.allDay = true; 
+                            //element.find('.fc-title').html(event.title);
+                            element.find('.fc-list-item-title').html(event.title);
+                            if (element.find('.fc-list-item-title').length > 0) {
+                                element.find('.fc-list-item-title').parent('tr').addClass('linkshow');
+                            }
+                        }
+                    },
+
+                    events: appts,
+                    eventContent: function (event) {
+                        return { html: event.appt.title };
+                    },
+                    eventClick: function (calEvent, jsEvent, view) {
+                           selectedEvent = calEvent; 
+                         $.ajax({
+                             type: "GET",
+                                url: "index?handler=GetAppointmentById&id=" + calEvent.eventID,
+                             data: { id: calEvent.eventID },
+                                  success: function (eventData) {
+                                       document.getElementById('cmbMAddr').options.length = 0;
+                                       for(i= 0; i < eventData.locations.length; i++) {
+                                            $('#cmbMAddr').append($('<option>', {
+                                                 value: eventData.locations[i].locationID,
+                                                text: eventData.locations[i].street
+                                            }));
+                                          }
+                                      if(eventData.id > 0) $('#modalTitle').text("Edit Appointment");
+                                      else {
+                                          $('#modalTitle').text("New Appointment");
+                                          $('#cmdDelete').hide();
+                                          $('#divEdit').hide();
+                                      }
+                                      $('#hdnEventID').val(eventData.id);
+                                      $('#txtMDate').val(new Date(eventData.apptTime).toISOString().substring(0, 10));
+                                      $('#txtMTime').val(new Date(eventData.apptTime).toTimeString().substring(0, 5));
+                                      $('#txtMRes').val(eventData.fullName);
+                                      $('#cmbMStatus').val(eventData.status);
+                                      $('#txtMDriver').val(eventData.driverName);
+                                      $('#hdnMRes').val(eventData.residentKey);
+                                      $('#hdnMDoc').val(eventData.doctorKey);
+                                      $('#txtMDoc').val(eventData.doctorName);
+                                      $('#lblMSpecialty').text(eventData.specialty);
+                                      $('#cmbMAddr').val(eventData.locationID);  // .trigger('change');
+                                      $('#lblMCity').text(eventData.city);
+                                      $('#lblMPhone').text(eventData.phone);
+                                      $('#lblMFax').text(eventData.fax);
+                                      $('#txtMPickup').val(eventData.depart != null ? new Date(eventData.depart).toTimeString().substring(0, 5) : '');
+                                      $('#cmbMPrep').val(eventData.prepID);
+                                      $('#cmbMApptType').val(eventData.apptType);
+                                      $('#txtMNotes').val(eventData.notes);
+                                    $('#lblMEditDate').text(new Date(eventData.modDate).toLocaleDateString());
+                                    $('#lblMEditBy').text(eventData.modifiedBy);
+                                    $('#lblMCreateDate').text(new Date(eventData.addDate).toLocaleDateString());
+                                    $('#lblMCreateBy').text(eventData.createdBy);
+
+                             },
+                            error: function (error) {
+                                alert(error.responseText.substring(0, error.responseText.indexOf('\n')).replace("System.SystemException:", ""));
+                             }
+                       });
+                             $('#myModal').modal('show');
+                    },
+                    selectable: true,
+                    select: function (start, end) {
+                        selectedEvent = {
+                            eventID: 0,
+                            title: '',
+                            description: '',
+                            start: start,
+                            end: end,
+                            allDay: false,
+                            color: ''
+                        };
+                        //openAddEditForm();
+                        $('#calendar').fullCalendar('unselect');
+                    },
+                    editable: true,
+
+                    dayClick: function (date, jsEvent, view) {
+                        //let date = $('#calendar').fullCalendar('getDate');
+                           $('#txtMDate').val(new Date(date).toISOString().substring(0, 10));
+                           $('#txtMTime').val(new Date().toTimeString().substring(0, 5));
+                              // $('#txtMDate').val(date.toISOString().substring(0, 10));
+                              // $('#txtMTime').val(date.toTimeString().substring(0, 5));
+
+                           $('#myModal').modal('show');
+                        // $('#messagePastDate').hide();
+                        // $('#dtpChurchDate').val(date.format());
+                    }
+                });
+            }
+
+                $('body').on('click', 'button.fc-prev-button', function () {
+                      updateYearMonth(); $('#btnSearch').click();
+               });
+
+               function updateYearMonth() {
+                   let date = $('#calendar').fullCalendar('getDate');
+                   let year = date._d.getFullYear();
+                   let month = date._d.getMonth() + 2;
+                   if (month > 12) {
+                       month = 1;
+                       year += 1;
+                   }
+
+                   if (month < 10) {
+                       month = "0" + month;
+                   }
+
+                   let nDate = year + '-' + month;
+                   $('#dtpSelector').val(nDate);
+                   FetchEventAndRenderCalendar(year, month);
+               }
+                  $('body').on('click', 'button.fc-next-button', function () {updateYearMonth(); $('#btnSearch').click();});
+
+      });
+            function ChangeFilter(txb){
+                var res = txb.value;
+                var id = txb.id.replace('txt','');
+               $('#hdn' + id).val('');
+                 const option = document.getElementById('dl' + id).querySelector(`[value="${res}"]`);
+               if (option) {
+                   var lbl = option.getAttribute('label');
+                   $('#txt' + id).val(lbl);
+                   $('#hdn' + id).val(res);
+                }
+             }
+             function clearFilter() {
+                    $('#dtpSelector').val(new Date().getFullYear() + '-' + ("0" + (new Date().getMonth() + 1)).slice(-2));
+                    $("#txtResident").val('');
+                    $("#hdnResident").val('');
+                    $("#txtDoctor").val('');
+                    $("#hdnDoctor").val('');
+                    $("#cmbApptType").val('');
+                 //               SetCurrentDateToSelector();
+            }
+            function changeLocation(locID){
+                $.ajax({
+                type: "GET",
+                    url: "index?handler=GetLocationById&id=" + locID,
+                data: { id: locID },
+                        success: function (eventData) {
+                            $('#lblMCity').text(eventData.city);
+                            $('#lblMPhone').text(eventData.phone);
+                            $('#lblMFax').text(eventData.fax);
+                            },
+                            error: function (error) {
+                                alert(error.responseText.substring(0, error.responseText.indexOf('\n')).replace("System.SystemException:", ""));
+                            }
+                    });
+            }
+            function changeDoctor(docID){
+                $.ajax({
+                    type: "GET",
+                    url: "index?handler=GetDoctorById&id=" + docID,
+                    data: { id: docID },
+                    success: function (eventData) {
+                        var newLocation = 0;
+                        document.getElementById('cmbMAddr').options.length = 0;
+                        for(i= 0; i < eventData.locations.length; i++) {
+                            if (i === 0) {
+                                newLocation = eventData.locations[i].locationID;
+                            }
+                            $('#cmbMAddr').append($('<option>', {
+                                value: eventData.locations[i].locationID,
+                                text: eventData.locations[i].street
+                            }));
+                          }
+                             debugger;
+                        $('#lblMSpecialty').text(eventData.specialty);
+                        changeLocation(newLocation);
+                    },
+                    error: function (error) {
+                        alert(error.responseText.substring(0, error.responseText.indexOf('\n')).replace("System.SystemException:", ""));
+                    }
+                   });
+            }
+            function clearForm(){
+                $('#hdnEventID').val('');
+                $('#txtMDate').val('');
+                $('#txtMTime').val('');
+                $('#txtMRes').val('');
+                $('#cmbMStatus').val('Booked');
+                $('#txtMDriver').val('');
+                $('#hdnMRes').val('');
+                $('#hdnMDoc').val('');
+                $('#txtMDoc').val('');
+                $('#lblMSpecialty').text('');
+                $('#cmbMAddr').val('');  // .trigger('change');
+                $('#lblMCity').text('');
+                $('#lblMPhone').text('');
+                $('#lblMFax').text('');
+                $('#txtMPickup').val('');
+                $('#cmbMPrep').val('');
+                $('#cmbMApptType').val('');
+                $('#txtMNotes').val('');
+                $('#lblMEditDate').text('');
+                $('#lblMEditBy').text('');
+                $('#lblMCreateDate').text('');
+                $('#lblMCreateBy').text('');
+            }
+            function deleteAppointment() {
+                if ($('#hdnEventID').val() > 0) {
+                    if (confirm("Are you sure you want to delete this appointment?")) {
+                        $.ajax({
+                            type: "POST",
+                            url: "index?handler=DeleteAppointment",
+                            data: { id: $('#hdnEventID').val() },
+                            success: function (data) {
+                                alert(data);
+                                $('#btnSearch').click();
+                            },
+                            error: function (error) {
+                                alert(error.responseText.substring(0, error.responseText.indexOf('\n')).replace("System.SystemException:", ""));
+                            }
+                        });
+                    }
+                }
+             }
+     </script>
+}
