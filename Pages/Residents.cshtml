@@ -1,0 +1,308 @@
+﻿@page
+@model Appointments.Pages.ResidentsModel
+@{
+}
+<body>
+    <main style="height:stretch">
+        <h3 style="text-align: center; font-size: 25px" id="hder">Residents</h3>
+
+        <div class="col-lg-12 col-md-12 col-sm-12 col-xl-12" style="text-align: center; background-color:white; width: 99%">
+            <div id="id_tableresidents" class="row sticky-top" style=" width: 99%; overflow-y: auto; overflow-x: auto; padding-left: 5px; padding-right: 5px;">
+                <table id="tblResidents" class="table-striped" align="center">
+                    <thead>
+                        <tr id="tabletop" style="background-color: royalblue; color: white; font-size: 18px;">
+                            <th></th>
+                            <th>Perm #</th>
+                            <th>Title</th>
+                            <th>Name</th>
+                            <th>Room</th>
+                            <th>Ext</th>
+                            <th>Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var resident in Model.lstResidents)
+                        {
+                            <tr style="text-align:left;">
+                                <td><input type="button" id="btnEdit_@resident.ID" value="Edit" class="btn btn-link" onclick="setEdit(@resident.ID);" /></td>
+                                <td>@resident.Perm</td>
+                                <td>@resident.Res_Title</td>
+                                <td>@resident.Name</td>
+                                <td>@resident.Room</td>
+                                <td>@resident.Ext</td>
+                                <td>@resident.ResidentNotes</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="myModal" class="modal fade" role="dialog" tabindex="-1" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+            <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2 id="modalTitle" class="modal-title fs-5">Edit Resident</h2>
+                        @* <button type="button" class="close" data-bs-dismiss="modal">&times;</button> *@
+                    </div>
+                    <div class="modal-body">
+                        <form id="frmEditResident" name="frmEditResident" class="col-md-12 form-horizontal" method="post">
+                            <input type="hidden" id="hdnResidentID" name="hdnResidentID" value="" />
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><label for="txtTitle" class="form-label" style="padding-bottom:0px; vertical-align:bottom;">Title:</label></td>
+                                    <td><label for="txtLast" class="form-label">Last Name:</label></td>
+                                    <td><label for="txtFirst" class="form-label">First Name:</label></td>
+                                    <td><label for="txtMiddle" class="form-label">Middle:</label></td>
+                                    <td><label for="chkStaff" class="form-label">Staff:</label></td>
+                                </tr>
+                                <tr>
+                                    <td><input type="text" id="txtTitle" name="txtTitle" class="form-control" style="width:120px;" /></td>
+                                    <td><input type="text" id="txtLast" name="txtLast" class="form-control" /></td>
+                                    <td><input type="text" id="txtFirst" name="txtFirst" class="form-control" /></td>
+                                    <td><input type="text" id="txtMiddle" name="txtMiddle" class="form-control" style="width:50px" /></td>
+                                    <td><input type="checkbox" id="chkStaff" name="chkStaff" /></td>
+                                </tr>
+                                <tr>
+                                    <td style=" text-align:right;"><label for="txtName" class="form-label">Name:</label></td>
+                                    <td colspan="3" style=" text-align:left;"><input type="text" id="txtName" name="txtName" class="form-control" /></td>
+                                    <td>&nbsp;</td>
+                                </tr>
+                                <tr>
+                                    <td style=" text-align:right;"><label for="txtRoom" class="form-label">Room:</label></td>
+                                    <td style=" text-align:left;"><input type="text" id="txtRoom" name="txtRoom" class="form-control" /></td>
+                                    <td style="white-space:nowrap;">
+                                        <table><tr><td><label for="txtExt" class="form-label">Ext:</label>&nbsp;&nbsp;</td><td><input type="text" id="txtExt" name="txtExt" class="form-control" style="width:80px" /></td></tr></table>
+                                    </td>
+                                    <td colspan="2" style="white-space:nowrap;">
+                                        <table><tr><td><label for="txtDateAssigned" class="form-label">Date Assigned:</label>&nbsp;&nbsp;</td>
+                                            <td><input type="date" id="txtDateAssigned" name="txtDateAssigned" class="form-control" maxlength="5" style="width:100px" /></td></tr></table>
+                                        
+                                        
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style=" text-align:right;"><label for="cmbStatus" class="form-label">Status:</label></td>
+                                    <td style=" text-align:left;">
+                                        <select id="cmbStatus" name="cmbStatus">
+                                            <option value="">Please Select</option>
+                                            @foreach(var status in Model.lstStatuses)
+                                            {
+                                                <option value="@status.ID">@status.StatusName</option>
+                                            }
+                                    </select></td>
+                                    <td colspan="3">&nbsp;</td>
+                                </tr>
+                                 <tr>
+                                    <td style=" text-align:right;"><label for="txtNotes" class="form-label">Patient Notes:</label></td>
+                                    <td colspan="4" style=" text-align:left;"><textarea id="txtNotes" name="txtNotes" class="form-control" style="width:90%"></textarea></td>
+                                </tr>
+                                <tr>
+                                    <td style=" text-align:right;"><label for="txtDOB" class="form-label">DOB:</label></td>
+                                    <td style=" text-align:left;"><input type="date" id="txtDOB" name="txtDOB" class="form-control" /></td>
+                                    <td style="white-space:nowrap;">
+                                        <table><tr><td><label for="txtLocation" class="form-label">Location:</label>&nbsp;&nbsp;</td><td><input type="text" id="txtLocation" name="txtLocation" class="form-control" style="width: 120px" /></td></tr></table>
+                                    </td>
+                                    <td colspan="2" style="white-space:nowrap;">
+                                        <label for="txtCountry" class="form-label">Country:</label>&nbsp;&nbsp;
+                                    <input type="text" list="dlCountry" id="txtCountry" name="txtCountry" autocomplete="off" style="width:100px;" />
+                                    <datalist id="dlCountry" name="lblCountry">
+                                        <option value="" label="Please Select" />
+                                        @foreach (var res in Model.lstCountries)
+                                        {
+                                            <option value="@res" label="@res" />
+                                        }
+                                        </datalist>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <table style="width:100%; border-top:1px solid #dee2e6; margin-top:10px;">
+                                <tr>
+                                    <td>
+                                        <div class="modal-static">
+                                            <button type="button" id="btnSave" class="btn btn-primary" onclick="if(SaveResident()) clearForm();">Save</button>
+                                            <button type="button" id="cmdDelete" name="cmdDelete" class="btn btn-primary" data-bs-dismiss="modal" onclick="deleteResident(); clearForm();">Delete</button>
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="clearForm();">Close</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
+
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+</body>
+@section Scripts {
+    <script src="~/js/site.js"></script>
+<script src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
+<link href="https://cdn.datatables.net/2.1.8/css/dataTables.dataTables.min.css" rel="stylesheet" type="text/css" />
+<script src="https://cdn.datatables.net/2.0.4/js/dataTables.min.js" defer></script>
+
+<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js" defer></script>
+<script src="https://cdn.datatables.net/2.1.8/js/dataTables.js" defer></script>
+<script src="https://cdn.datatables.net/2.1.8/js/dataTables.jqueryui.js" defer></script>
+<script src="https://cdn.datatables.net/buttons/3.2.0/js/dataTables.buttons.js" defer></script>
+<script src="https://cdn.datatables.net/buttons/3.2.0/js/buttons.jqueryui.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js" defer></script>
+<script src="https://cdn.datatables.net/buttons/3.2.0/js/buttons.html5.min.js" defer></script>
+<script src="https://cdn.datatables.net/buttons/3.2.0/js/buttons.print.min.js" defer></script>
+    <script type="text/javascript">
+    $(document).ready(function () {
+            $('#myModal').modal({
+            backdrop: 'static',
+            keyboard: false
+            });
+        var arr = [
+                        { extend: 'copy', className: 'btn btn-primary' },
+                        { extend: 'csv', className: 'btn btn-primary' },
+                        { extend: 'excel', className: 'btn btn-primary' },
+                        { extend: 'pdf', className: 'btn btn-primary' },
+                        { extend: 'print', className: 'btn btn-primary' }
+                    ];
+
+           // arr.unshift({ extends: 'button', className: 'btn btn-primary', id: 'btnNewChoice', text: 'Add New', action: function () { setRowChoiceNew(); }});
+        // }
+        $('#tblResidents').dataTable({
+            order: [[1, 'asc']],
+            destroy: true,
+            "sPaginationType": "full_numbers",
+            scrollY: gridHeight(),   //'550px',
+             // contentHeight: 
+            "iDisplayLength": 100,
+           columnDefs: [
+                { targets: [0], searchable: false }, 
+                { targets: [0], orderable: false },
+            ],
+            layout: {
+                topstart: 'pageLength',
+                top: {
+                    buttons: arr, 
+                    // [
+                    //     { extends: 'button', className: 'btn btn-primary', id: 'btnNewChoice', text: 'Add New', action: function () { setRowChoiceNew(); }},
+                    //     { extend: 'copy', className: 'btn btn-primary' },
+                    //     { extend: 'csv', className: 'btn btn-primary' },
+                    //     { extend: 'excel', className: 'btn btn-primary' },
+                    //     { extend: 'pdf', className: 'btn btn-primary' },
+                    //     { extend: 'print', className: 'btn btn-primary' }
+                    // ]
+                },
+                topend: 'search',
+               // bottomend: 'paging',
+            },
+        });
+     });
+      function setEdit(id) {
+        var url = 'Residents?handler=GetResidentById&id=' + id;
+        $.get(url, function (data) {
+            $('#hdnResidentID').val(data.id);
+            $('#txtLast').val(data.res_LastName);
+            $('#txtFirst').val(data.res_FirstName);
+            $('#txtMiddle').val(data.res_MiddleInt);
+            $('#txtName').val(data.name);
+            $('#txtTitle').val(data.res_Title);
+            $('#chkStaff').prop('checked', data.onStaff);
+            $('#txtRoom').val(data.room);
+            $('#txtExt').val(data.ext);
+            $('#txtDateAssigned').val(formatDate(data.dateAssigned));
+            $('#cmbStatus').val(data.status==null ? '' : data.status);
+            $('#txtNotes').text(data.residentNotes);
+            $('#txtDOB').val(formatDate(data.dob));
+            $("#txtLocation").val(data.location);
+            $('#txtCountry').val(data.country);
+            $('#myModal').modal('show');
+            });
+     }
+     function clearForm() {
+            $('#hdnResidentID').val('');
+            $('#txtTitle').val('');
+            $('#txtLast').val('');
+            $('#txtFirst').val('');
+            $('#txtMiddle').val('');
+            $('#chkStaff').prop('checked', false);
+            $('#txtName').val('');
+            $('#txtRoom').val('');
+            $('#txtExt').val('');
+            $('#txtDateAssigned').val('');
+            $('#cmbStatus').val('');
+            $('#txtNotes').text('');
+            $('#txtDOB').val('');
+            $("#txtLocation").val('');
+            $('#txtCountry').val('');
+         }
+        function formatDate(sDate){
+            if(sDate == null || sDate == '')
+                return '';
+            var date = new Date(sDate);
+            if(date.getFullYear() <1900)
+                    return '';
+            var month = (date.getMonth() + 1).toString().padStart(2, '0');
+            var day = date.getDate().toString().padStart(2, '0');
+            var year = date.getFullYear();
+            var hours = date.getHours().toString().padStart(2, '0');
+            var minutes = date.getMinutes().toString().padStart(2, '0');
+            //return month + '/' + day + '/' + year + ' ' + hours + ':' + minutes;
+            return year + '-' + month + '-' + day;
+        }
+            function SaveResident()
+        {
+                if($("#txtLast").val().trim().length == 0 || $("#txtFirst").val().trim().length == 0){
+                alert("Last and First name are required");
+                return false;
+            }
+            
+            var frm = $('#frmEditResident');
+            document.getElementById("msg").innerHTML = "";
+            $.ajax({
+                type: "POST",
+                url: "Residents?handler=SaveResident",
+                type: frm.attr('method'),
+                data: frm.serialize(),
+                success: function (data) {
+                document.getElementById("msg").style = "padding:0px;text-align:center;font-weight:bold;color:green;";
+                document.getElementById("msg").innerHTML = "The Resident is saved successfully!";
+                    $('#myModal').modal('hide');
+                    //$('#btnSearch').click();
+                    location.reload();
+                    return true;
+                },
+                error: function (xhr, status) {
+                    document.getElementById("msg").style = "padding:0px;text-align:center;font-weight:bold;color:red;";
+                    document.getElementById("msg").innerHTML = "ERROR: " + status + ", " + xhr.statusText;
+                    return false;
+                }
+            });
+        }
+        function deleteResident() {
+            var id = $('#hdnResidentID').val();
+            if (id == '') {
+                alert('No resident selected for deletion.');
+                return;
+            }
+            if (!confirm('Are you sure you want to delete this resident?')) {
+                return;
+            }
+            $.get('Residents?handler=DeleteResidentById', { id: id }, function (data) {
+                if (data) {
+                    alert('The Resident deleted successfully.');
+                } else {
+                        alert('Error deleting resident: ');  // + TempData["Message"]);
+                }
+                location.reload(); // Refresh the page to show updated data
+            });
+         }
+        function gridHeight() {
+            var iRet = screen.availHeight;
+            iRet = iRet - document.getElementById('appHeader').offsetHeight;
+            iRet = iRet - document.getElementById('appFooter').offsetHeight;
+            iRet = iRet - document.getElementById('hder').offsetHeight;
+            return iRet - 400; // screen.availHeight - document.getElementById('appHeader').offsetHeight - document.getElementById('appFooter').offsetHeight - 100;
+        }
+    </script>
+}

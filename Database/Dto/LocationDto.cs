@@ -3,7 +3,7 @@
     public class LocationDto
     {
         public int DoctorKey { get; set; }
-        public int LocationID { get; set; }
+        public int LocationID { get; set; } = 0;
         public string Street { get; set; } = string.Empty;
         public string City { get; set; } = string.Empty;
         public string State { get; set; } = string.Empty;

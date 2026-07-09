@@ -47,14 +47,27 @@
            /* margin-top: 300px;*/
         }
         .fntsize {
-            font-size: 16px;
+            font-size: 18px;
         }
         td {
             font-size: 16px;
         }
+        input[type="text"] {
+            font-size: 16px;
+        }
+        select {
+            font-size: 16px;
+        }
+        a {
+            font-size: 16px;
+        }
+        input[type=checkbox] {
+            width: 20px;
+            height: 20px;
+        }
     </style>
 
-    <header class="dontprint">
+    <header class="dontprint" id="appHeader">
             <nav class="navbar navbar-expand-lg bg-light">
                 <div class="container-fluid nav-apostolic">
                     <div>
@@ -65,24 +78,25 @@
                         <span class="navbar-toggler-icon"></span>
                     </button>
                     <div class="collapse navbar-collapse" id="navbarSupportedContent" style="padding-left: 150px; ">
-                        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                        <ul class="navbar-nav me-auto mb-2 mb-lg-1">
                             <li class="nav-item">
-                                <a class="nav-link active" asp-area="" asp-controller="Home" asp-action="Index"><div class="fntsize">Appointments</div></a>
+                                @* <a class="nav-link active" asp-area="" asp-controller="Home" asp-action="Index"><div class="fntsize">Appointments</div></a> *@
+                            <a class="nav-link" href="#" onclick="navigateScreen('Index');"><div class="fntsize">Appointments</div></a>
+                            </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" onclick="navigateScreen('Doctors');"><div class="fntsize">Doctors</div></a>
+                        </li>
+@*                         <li class="nav-item">
+                            <a class="nav-link" href="#" onclick="navigateScreen('Residents');"><div class="fntsize">Residents</div></a>
+                        </li>
+                            <li class="nav-item">
+                            <a class="nav-link" href="#" onclick="navigateScreen('Nurses');"><div class="fntsize">Nurses</div></a>
+                            </li> *@
+                            <li class="nav-item">
+                            <a class="nav-link" href="#" onclick="navigateScreen('Drivers');"><div class="fntsize">Drivers</div></a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Doctors"><div class="fntsize">Doctors</div></a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Residents"><div class="fntsize">Residents</div></a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Nurses"><div class="fntsize">Nurses</div></a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Drivers"><div class="fntsize">Drivers</div></a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Cars"><div class="fntsize">Cars</div></a>
+                                <a class="nav-link" href="#" onclick="navigateScreen('Cars');"><div class="fntsize">Cars</div></a>
                             </li>
                         </ul>
                 </div>
@@ -94,18 +108,10 @@
                 <td>
                     <table border="0" cellpadding="0" cellspacing="0" width="100%" bgcolor="White" height="7" style="border-collapse: collapse">
                         <tr>
-                            @*<td height="1" width="121%" background="~/images/B3.gif">*@
                             <td colspan="3" height="1" width="121%">
                                 <font face="Arial, Arial, Helvetica">
-                                    <div id="Layer1" style="position: absolute; left: 3px; top: 5px; width: 247px; height: 60px; z-index: 1">
-                                        @*<img border="0" src="images/LogoFinale.png" width="312" height="64">*@
-                                        
+                                    <div id="Layer1" style="position: absolute; left: 3px; top: 5px; width: 247px; height: 60px; z-index: 1">                                        
                                     </div>
-
-                                    @*<p align="right">
-                                                <img border="0" src="images/B2.gif" width="720" height="68">
-                                            </p>*@
-
                                 </font>
                             </td>
                         </tr>
@@ -132,7 +138,7 @@
                                 else
                                 { <div id="msg">&nbsp;</div>}
                             </td>
-                            <td style="white-space:nowrap; background-color: #EEE1D1; text-align: right; padding-right: 10px; font-size:13px; color:chocolate; font-weight:bold;">
+                            <td style="white-space:nowrap; background-color: #EEE1D1; text-align: right; padding-right: 10px; color:chocolate; font-weight:bold;">
 
                                 <script LANGUAGE="JavaScript">
                                     <!--    Begin
@@ -173,7 +179,7 @@
         </main>
     </div>
 
-    <footer class="border-top footer text-muted" style="z-index: 1;">
+    <footer id="appFooter" class="border-top footer text-muted" style="z-index: 1;">
         <div class="dontprint">
             <div class="footer">
                 <span style="color: white;">
@@ -194,26 +200,10 @@
 
     @await RenderSectionAsync("Scripts", required: false)
     <script>
-        // $(document).ready(function () {
-
-        //     //get house name
-        //     var userName = '';
-        //     $.ajax({
-        //         type: "GET",
-        //         url: "../Diocese/GetUserName",
-        //         async: false,
-        //         success: function (data) {
-        //             if (document.getElementById("txtSalut") != null)
-        //                 document.getElementById("txtSalut").innerHTML = "Welcome!&nbsp;&nbsp;Logged&nbsp;&nbsp;In&nbsp;&nbsp;as&nbsp;&nbsp;<strong>" + data + "</strong>";
-        //         },
-        //         error: function (error) {
-        //             console.log('Error getting User Name', error);
-        //             //alert(error.responseText.substring(0, error.responseText.indexOf('\n')).replace("System.SystemException:", ""));
-        //         }
-
-        //     });
-
-        // });
-    </script>
+        function navigateScreen(screenName) {
+            var sUrl = screenName;
+            location.replace(sUrl);
+        }
+        </script>
 </body>
 </html>

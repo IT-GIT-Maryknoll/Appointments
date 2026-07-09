@@ -31,16 +31,11 @@ namespace Appointments
             services.AddAntiforgery(o => o.HeaderName = "XSRF-TOKEN");
             services.AddSingleton<DbContext>();
             services.AddScoped<IAppointmentsRepository, AppointmentsRepository>();
-
-            //services.AddScoped<IVoteListRepository, VoteListRepository>();
-            //services.AddScoped<IVoteEditRepository, VoteEditRepository>();
-            //services.AddScoped<IVoteChoiceListRepository, VoteChoiceListRepository>();
-            ////services.AddScoped<IVoteChoiceEditRepository, VoteChoiceEditRepository>();
-            //services.AddScoped<IVoteWeightListRepository, VoteWeightListRepository>();
-            //services.AddScoped<IVoteRestrictionsRepository, VoteRestrictionsRepository>();
-            //services.AddScoped<IVoteRepository, VoteRepository>();
-            //services.AddScoped<IVoteAdminRepository, VoteAdminRepository>();
-            //services.AddScoped<ISendMailRepository, SendMailRepository>();
+            services.AddScoped<IDoctorsRepository, DoctorsRepository>();
+            services.AddScoped<IResidentsRepository, ResidentsRepository>();
+            services.AddScoped<IStaffRepository, StaffRepository>();
+            services.AddScoped<IDriversRepository, DriversRepository>();
+            services.AddScoped<ICarsRepository, CarsRepository>();
 
             services.AddSession(options =>
             {

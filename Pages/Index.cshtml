@@ -14,13 +14,43 @@
     // if (userObj != null && userObj.IsAdmin) { s = "admin"; }
     // else if (userObj != null && userObj.IsReadOnly) { s = "readonly"; }
 }
-<h3 style="text-align: center; font-size: 25px">Appointments Calendar</h3>
+@* <style>
+    body {
+        margin: 0;
+        min-height: 100vh; /* Ensure full height */
+        display: flex;
+        flex-direction: column;
+    }
+
+    main {
+        flex: 1; /* Push footer to bottom */
+        padding: 20px;
+        background: #f4f4f4;
+    }
+
+    .above-footer {
+        background: #ffcc00;
+        padding: 15px;
+        text-align: center;
+        font-weight: bold;
+    }
+
+    footer {
+        background: #333;
+        color: white;
+        text-align: center;
+        padding: 15px;
+    }
+</style> *@
+<body>
+<main style="height:stretch; background-color:transparent;">
+<h3 style="text-align: center; vertical-align:top; font-size: 25px" id="hder">Appointments Calendar</h3>
 <form id="frm" name="frm" method="post">
 <table>
     <tr>
     <td style="vertical-align:top;width:10%;padding:5px;">
         <table style="margin: 5px; background-color:lightgoldenrodyellow;">
-                <tr><td colspan="2" style="font-weight:bold; color: #336699;"><h4>Select Appointment Criteria</h4></td></tr>
+                <tr><td colspan="2" style="font-weight:bold; color: #336699;"><h4>Select Search Criteria</h4></td></tr>
             <tr><td><label id="lblDate">Date:</label></td><td><input type="month" id="dtpSelector" name="lblDate" required="required" value="@Model.lblDate" /></td></tr>
                 <tr>
                     <td><label id="lblResident">Resident:</label></td>
@@ -69,33 +99,87 @@
                     </tr>
         </table>
     </td>
-        <td><div id="calendar" style="padding: 5px;"></div></td>
+        <td rowspan="2"><div id="calendar" style="padding: 5px;"></div></td>
+    </tr>
+    <tr>
+        <td style="vertical-align:bottom;">
+            <div style="border:0; padding-bottom: 70px;padding-top:20px;" class="sticky-bottom">
+                <table style="background-color: transparent;">
+                    <tr><td colspan="2" style="text-align:left;font-weight:bold;color:blue;padding-left:5px;padding-right:20px;">Appointment Types:</td></tr>
+                    <tr>
+                                    <td style="background-color:#c4eda9; width:20px; height:20px;"></td>@* 378006 *@
+                        <td style="text-align:left;color:blue;padding-left:5px;padding-right:20px;">Follow-Up</td>
+                        </tr><tr>
+                                    <td style="background-color:#afd5f5; width:20px; height:20px;"></td>@* 0078D7 *@
+                        <td style="text-align:left;color:blue;padding-left:5px;padding-right:20px;">Consult</td>
+                    </tr>
+                    <tr>
+                                    <td style="background-color:#ffcd90; width:20px; height:20px;"></td>@* FF8C00 *@
+                        <td style="text-align:left;color:blue;padding-left:5px;padding-right:20px;">In-House</td>
+                    </tr>
+                    <tr>
+                                    <td style="background-color:#ffabb3; width:20px; height:20px;"></td>@* 9B111E *@
+                        <td style="text-align:left;color:blue;padding-left:5px;padding-right:20px;">Diagnostic</td>
+                    </tr>
+                    <tr>
+                                    <td style="background-color:#c7c7c7; width:20px; height:20px;"></td>@* 434343 *@
+                        <td style="text-align:left;color:blue;padding-left:5px;padding-right:20px;">Default</td>
+                    </tr>
+                </table>
+            </div>
+        </td>
     </tr>
 </table>
 </form>
 
-
-<div id="myModal" class="modal fade" role="dialog" tabindex="-1">
+  <div id="myModal" class="modal fade" role="dialog" tabindex="-1" aria-hidden="true" data-backdrop="static" data-keyboard="false" >
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
                 <h2 id="modalTitle" class="modal-title fs-5" >New Appointment</h2>
                 @* <button type="button" class="close" data-bs-dismiss="modal">&times;</button> *@
              </div>
-                <div class="modal-body">
-                <form id="frmAddEdit" name="frmAddEdit" class="col-md-12 form-horizontal">
-                    <input type="hidden" id="hdnEventID" name="hdnEventID" value="" />
+                    <div class="modal-body">
+                    <form id="frmAddEdit" name="frmAddEdit" class="col-md-12 form-horizontal" method="post">
+                            <input type="hidden" id="hdnEventID" name="hdnEventID" value="" />
                     <table class="table table-borderless">
-                        <tr>
-                            <td style="padding:10px; align-content:flex-end;">Date:</td><td style ="padding:10px; align-content:flex-start;"><input type="date" id="txtMDate" name="txtDate" class="form-control" /></td>
-                            <td style="padding:10px; align-content:flex-end;">Time:</td>
-                            <td style="padding:10px; align-content:flex-start;"><input type="time" id="txtMTime" name="txtTime" step="1800" class="form-control" /></td>
+                        <tr id="trReccuring" style="display: table-row;">
+                            <td><label id="lblReoccuring" style="white-space:nowrap;font-weight:600;">Create Reoccurring:</label></td>
+                            <td colspan="3"><input type="checkbox" id="chkReccuring" name="chkReccuring" onclick="ToggleReccuring(this.checked);" /></td>
+                        </tr>
+                        <tr id="trDateTime">
+                            <td class="form-label" style="padding:10px;">Date:</td>
+                            <td style="padding:10px; align-content:flex-start;"><input type="date" id="txtMDate" name="txtMDate" class="form-control-lg" /></td>
+                            <td style="padding:10px;">Time:</td>
+                            <td style="padding:10px; align-content:flex-start;"><input type="time" id="txtMTime" name="txtMTime" step="1800" class="form-contro-lg" /></td>
                          </tr>
+                        <tr id="trReoccurring" style="display:none;">
+                            <td class="form-label" style="padding:10px;">Start Date:</td>
+                            <td style="padding:10px; align-content:flex-start;"><input type="date" id="txtMStartDate" name="txtMStartDate" class="form-control-lg" /></td>
+                            <td style="padding:10px;">End Date:</td>
+                            <td style="padding:10px; align-content:flex-start;"><input type="date" id="txtMEndDate" name="txtMEndDate" class="form-control-lg" /></td>
+                        </tr>
+                            <tr id="trWeekdays" style="display:none;">
+                                <td colspan="4">
+                                    <table style="width:100%; border: 1px solid #dee2e6; margin-top:10px;margin-right:20px;">
+                            <tr>
+                                <td style="padding:10px;">Repeat on:</td>
+                                <td style="padding:10px;"><input type="checkbox" id="chkMon" name="chkMon" />&nbsp;Mon</td>
+                                <td style="padding:10px;"><input type="checkbox" id="chkTue" name="chkTue" />&nbsp;Tue</td>
+                                <td style="padding:10px;"><input type="checkbox" id="chkWed" name="chkWed" />&nbsp;Wed</td>
+                                <td style="padding:10px;"><input type="checkbox" id="chkThu" name="chkThu" />&nbsp;Thu</td>
+                                <td style="padding:10px;"><input type="checkbox" id="chkFri" name="chkFri" />&nbsp;Fri</td>
+                                <td style="padding:10px;"><input type="checkbox" id="chkSat" name="chkSat" />&nbsp;Sat</td>
+                                <td style="padding:10px;"><input type="checkbox" id="chkSun" name="chkSun" />&nbsp;Sun</td>
+                             </tr>
+                                </table>
+                            </td>
+                        </tr>
                          <tr>
-                            <td style="padding:10px; align-content:flex-end;">Resident:</td>
+                            <td style="padding:10px;">Resident:</td>
                             <td style="padding:10px; align-content:flex-start;">
                                 <input type="hidden" id="hdnMRes" name="hdnMRes" value="" />
-                                <input type="text" id="txtMRes" list="dlMRes" name="txtRes" class="form-control" onchange="ChangeFilter(this);" />
+                                <input type="text" id="txtMRes" list="dlMRes" name="txtRes" class="form-control-lg" onchange="ChangeFilter(this);" />
                                 <datalist id="dlMRes" name="lblMRes">
                                     @foreach (var res in Model.lstResidents)
                                     {
@@ -103,19 +187,19 @@
                                     }
                                 </datalist>
                             </td>
-                            <td style="padding:10px; align-content:flex-end;">Status:</td>
+                            <td style="padding:10px;">Status:</td>
                             <td style="padding:10px; align-content:flex-start;">
-                                <select id="cmbMStatus" name="cmbMStatus" class="form-control" >
+                                <select id="cmbMStatus" name="cmbMStatus" class="form-control-lg">
                                     <option value="Booked" label="Booked" />
                                     <option value="Cancelled" label="Cancelled" />
                                 </select>
                             </td>
                         </tr>
                         <tr>
-                            <td style="padding:10px; align-content:flex-end;">Doctor:</td>
+                            <td style="padding:10px; ">Doctor:</td>
                             <td style="padding:10px; align-content:flex-start;">
                                 <input type="hidden" id="hdnMDoc" name="hdnMDoc" value=""  />
-                                <input type="text" id="txtMDoc" name="txtMDoc" list="dlMDoc" class="form-control" onchange="ChangeFilter(this); changeDoctor($('#hdnMDoc').val());" />
+                                <input type="text" id="txtMDoc" name="txtMDoc" list="dlMDoc" class="form-control-lg" onchange="ChangeFilter(this); changeDoctor($('#hdnMDoc').val());" />
                                 <datalist id="dlMDoc" name="lblMDoc">
                                     @foreach (var res in Model.lstDoctors)
                                     {
@@ -123,28 +207,28 @@
                                     }
                                 </datalist>
                             </td>
-                            <td style="padding:10px; align-content:flex-end;">Specialty:</td>
-                            <td style="padding:10px; align-content:flex-start;"><label id="lblMSpecialty" name="lblMSpecialty" class="form-control" ></label></td>
+                            <td style="padding:10px; ">Specialty:</td>
+                            <td style="padding:10px; align-content:flex-start;"><label id="lblMSpecialty" name="lblMSpecialty" class="form-contro-lg" ></label></td>
                         </tr>
                         <tr>
-                            <td style="padding:10px; align-content:flex-end;">Address:</td>
+                            <td style="padding:10px;">Address:</td>
                             <td style="padding:10px; align-content:flex-start;">
-                                <select id="cmbMAddr" name="cmbMAddr" class="form-control" onchange="changeLocation(this.value);"></select>
+                                <select id="cmbMAddr" name="cmbMAddr" class="form-control-lg" onchange="changeLocation(this.value);"></select>
                             </td>
-                            <td style="padding:10px; align-content:flex-end;">City:</td>
-                            <td style="padding:10px; align-content:flex-start;"><label id="lblMCity" name="lblMCity" class="form-control" /></td>
+                            <td style="padding:10px; ">City:</td>
+                            <td style="padding:10px; align-content:flex-start;"><label id="lblMCity" name="lblMCity" class="form-control-lg" /></td>
                         </tr>
                         <tr>
-                            <td style="padding:10px; align-content:flex-end;">Phone:</td>
-                            <td style="padding:10px; align-content:flex-start;"><label id="lblMPhone" name="lblMPhone" class="form-control" /></td></td>
-                            <td style="padding:10px; align-content:flex-end;">Fax:</td>
-                            <td style="padding:10px; align-content:flex-start;"><label id="lblMFax" name="lblMFax" class="form-control" /></td>
+                            <td style="padding:10px; ">Phone:</td>
+                            <td style="padding:10px; align-content:flex-start;"><label id="lblMPhone" name="lblMPhone" class="form-control-lg" /></td></td>
+                            <td style="padding:10px; ">Fax:</td>
+                            <td style="padding:10px; align-content:flex-start;"><label id="lblMFax" name="lblMFax" class="form-control-lg" /></td>
                         </tr>
                         <tr>
-                            <td style="padding:10px; align-content:flex-end;">Driver:</td>
-                            <td style="padding:10px; align-content:flex-start;">
+                            <td style="padding:10px;">Driver:</td>
+                            <td>
                                 <input type="hidden" id="hdnMDriver" name="hdnMDriver" value="" />
-                                <input type="text" id="txtMDriver" name="txtMDriver" list="dlMDriver" class="form-control" onchange="ChangeFilter(this);" />
+                                                    <input type="text" id="txtMDriver" name="txtMDriver" list="dlMDriver" class="form-control-lg" style="width: 150px;" onchange="ChangeFilter(this);" />
                                 <datalist id="dlMDriver" name="lblMDriver">
                                     @foreach (var res in Model.lstDrivers)
                                     {
@@ -152,14 +236,41 @@
                                     }
                                 </datalist>
                             </td>
-                            <td style="padding:10px; align-content:flex-end;">Pick up:</td>
-                            <td style="padding:10px; align-content:flex-start;"><input type="time" id="txtMPickup" name="txtPickup" step="1800" class="form-control" /></td>
+                                <td style="padding:10px;">Car:</td>
+                                    <td style="padding:10px; align-content:flex-start;">
+                                        <select id="cmbMCar" name="cmbMCar" class="form-control-lg">
+                                            <option value="">Please Select</option>
+                                            @foreach (var res in Model.lstCars)
+                                            {
+                                                <option value="@res.CarNum">@res.CarName</option>
+                                            }   
+                                        </select>
+                            </td>
+                            </tr><tr>@* <td></td><td></td> *@
+                                <td colspan="2"><table><tr>
+                                                <td>Make Appointment</td>
+                                                <td style="padding-left: 5px;"><input type="checkbox" id="chkMakeAppointment" name="chkMakeAppointment" /></td>
+                                                <td style="padding-left: 25px;">Nurse's Aid</td>
+                                                <td style="padding-left: 5px;"><input type="checkbox" id="chkNursesAideAccompaniment" name="chkNursesAideAccompaniment" /></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Appointment Confirmed</td>
+                                                <td style="padding-left: 5px;"><input type="checkbox" id="chkConfirmedAppointment" name="chkConfirmedAppointment" /></td>
+                                                <td style="padding-left: 25px;">Wait</td>
+                                                <td style="padding-left: 5px;"><input type="checkbox" id="chkWait" name="chkWait" /></td>
+                                            </tr>
+                                            <tr><td>In House</td><td style="padding-left: 5px;"><input type="checkbox" id="chkInHouseVisit" name="chkInHouseVisit" /></td><td></td><td></td></tr>
+                                        </table>
+                                 </td>
+                            <td style="padding:10px;">Pick up:</td>
+                            <td style="padding:10px; align-content:flex-start;"><input type="time" id="txtMPickup" name="txtPickup" step="1800" class="form-control-lg" /></td>
                         </tr>
                         <tr><td colspan="4">&nbsp;</td></tr>
                         <tr>
                             <td><label id="lblMPrep">Prep:</label></td>
                             <td>
-                                <select id="cmbMPrep" name="cmbMPrep">
+                                <select id="cmbMPrep" name="cmbMPrep" class="form-control-lg">
+                                    <option value="">Please Select</option>
                                     @foreach (var res in Model.lstPreps )
                                     {
                                             <option value="@res.PrepID">@res.PrepName</option>
@@ -168,7 +279,8 @@
                             </td>
                             <td><label id="lblMApptType">Appt Type:</label></td>
                             <td>
-                                <select id="cmbMApptType" name="cmbMApptType">
+                                <select id="cmbMApptType" name="cmbMApptType" class="form-control-lg">
+                                    <option value="">Please Select</option>
                                     @foreach (var res in Model.lstAppointmentTypes)
                                     {
                                         if (Model.cmbApptType == res.Type)
@@ -185,21 +297,22 @@
                         </tr>
                         <tr>
                             <td><label id="lblMNotes">Notes:</label></td>
-                            <td colspan="3"><textarea id="txtMNotes" name="txtMNotes" class="form-control" rows="3"></textarea></td>
+                            <td colspan="3"><textarea id="txtMNotes" name="txtMNotes" class="form-control-lg" rows="3" style="width:100%;"></textarea></td>
                         </tr>
                     </table>
+                    
                     <table style="width:100%; border-top:1px solid #dee2e6; margin-top:10px;">
                         <tr>
                             <td>
-                                <div class="modal-sm" id="divEdit" style="vertical-align:top;">
+                                <div class="modal-sm form-control" id="divEdit" name="divEdit" style="vertical-align:top; border: 0px;">
                                     Modified on:&nbsp;<label id="lblMEditDate"></label>&nbsp;&nbsp;by:&nbsp;<label id="lblMEditBy"></label><br />
                                     Created on:&nbsp;<label id="lblMCreateDate"></label>&nbsp;&nbsp;by:&nbsp;<label id="lblMCreateBy"></label>
                                 </div>
                             </td>
                             <td>
                                 <div class="modal-static">
-                                    <button type="button" id="btnSave" class="btn btn-primary">Save</button>
-                                    <button type="button" id="cmdDelete" class="btn btn-primary" data-bs-dismiss="modal" onclick="deleteAppointment(); clearForm();">Delete</button>
+                                    <button type="button" id="btnSave" class="btn btn-primary" onclick="if(saveAppointment()) clearForm();">Save</button>
+                                    <button type="button" id="cmdDelete" name="cmdDelete" class="btn btn-primary" data-bs-dismiss="modal" onclick="deleteAppointment(); clearForm();">Delete</button>
                                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="clearForm();">Close</button>
                                 </div>
                             </td>
@@ -212,7 +325,8 @@
         </div>
     </div>
  </div>
-
+</main>
+</body>
 <link href="//cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.4.0/fullcalendar.min.css" rel="stylesheet" />
 <link href="//cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.4.0/fullcalendar.print.css" rel="stylesheet" media="print" />
 <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.47/css/bootstrap-datetimepicker.min.css" rel="stylesheet" />
@@ -241,8 +355,13 @@
     <script src="~/js/site.js"></script>
     
     <script>
-        var appts = [];
+        var appts = []; var strDate = '';
         $(document).ready(function () {
+
+        $('#myModal').modal({
+        backdrop: 'static',
+        keyboard: false
+        });
             let date = new Date();
             let month = date.getMonth() + 1;
             let year = date.getFullYear();
@@ -303,8 +422,8 @@
                 }
                 $('#calendar').fullCalendar('destroy');
                 $('#calendar').fullCalendar({
-                    contentHeight: 600,
-                    contentWidth: 1630,
+                    contentHeight: gridHeight(),  //600,
+                    contentWidth: gridWidth(),   //1630,
                     defaultDate: date,
                     timeFormat: 'h(:mm)a',
                     displayEventTime: false,
@@ -338,7 +457,6 @@
                         right: 'month,listMonth'     /* ,basicWeek,basicDay */
                     },
                     eventLimit: 100,
-                   // eventColor: '#378006',
                     eventRender: function (event, element, view) {
                         var title = "";
                         if (typeof element.find('.fc-title')[0] === 'object') {
@@ -361,10 +479,11 @@
                         return { html: event.appt.title };
                     },
                     eventClick: function (calEvent, jsEvent, view) {
-                           selectedEvent = calEvent; 
+                        document.getElementById("msg").innerHTML = "";
+                        selectedEvent = calEvent; 
                          $.ajax({
                              type: "GET",
-                                url: "index?handler=GetAppointmentById&id=" + calEvent.eventID,
+                             url: "index?handler=GetAppointmentById&id=" + calEvent.eventID,
                              data: { id: calEvent.eventID },
                                   success: function (eventData) {
                                        document.getElementById('cmbMAddr').options.length = 0;
@@ -374,14 +493,22 @@
                                                 text: eventData.locations[i].street
                                             }));
                                           }
-                                      if(eventData.id > 0) $('#modalTitle').text("Edit Appointment");
+
+                                       if(eventData.id > 0) {
+                                           $('#modalTitle').text("Edit Appointment");
+                                           $('#cmdDelete').show();
+                                           $('#divEdit').show();
+                                           $('#trReccuring').hide();
+                                       }
                                       else {
                                           $('#modalTitle').text("New Appointment");
                                           $('#cmdDelete').hide();
                                           $('#divEdit').hide();
+                                          $('#trReccuring').show();
                                       }
                                       $('#hdnEventID').val(eventData.id);
                                       $('#txtMDate').val(new Date(eventData.apptTime).toISOString().substring(0, 10));
+                                         $('#hdnDate').val(new Date(eventData.apptTime).toISOString().substring(0, 10));
                                       $('#txtMTime').val(new Date(eventData.apptTime).toTimeString().substring(0, 5));
                                       $('#txtMRes').val(eventData.fullName);
                                       $('#cmbMStatus').val(eventData.status);
@@ -398,11 +525,16 @@
                                       $('#cmbMPrep').val(eventData.prepID);
                                       $('#cmbMApptType').val(eventData.apptType);
                                       $('#txtMNotes').val(eventData.notes);
-                                    $('#lblMEditDate').text(new Date(eventData.modDate).toLocaleDateString());
-                                    $('#lblMEditBy').text(eventData.modifiedBy);
-                                    $('#lblMCreateDate').text(new Date(eventData.addDate).toLocaleDateString());
-                                    $('#lblMCreateBy').text(eventData.createdBy);
-
+                                      $('#lblMEditDate').text(new Date(eventData.modDate).toLocaleDateString());
+                                      $('#lblMEditBy').text(eventData.modifiedBy);
+                                      $('#lblMCreateDate').text(new Date(eventData.addDate).toLocaleDateString());
+                                      $('#lblMCreateBy').text(eventData.createdBy);
+                                      $('#cmbMCar').val(eventData.carNum);
+                   $('#chkMakeAppointment').prop('checked', eventData.makeAppointment);
+                   $('#chkConfirmedAppointment').prop('checked', eventData.confirmedAppointment);
+                   $('#chkNursesAideAccompaniment').prop('checked', eventData.nursesAideAccompaniment);
+                   $('#chkWait').prop('checked', eventData.wait);
+                   $('#chkInHouseVisit').prop('checked', eventData.inHouseVisit);
                              },
                             error: function (error) {
                                 alert(error.responseText.substring(0, error.responseText.indexOf('\n')).replace("System.SystemException:", ""));
@@ -427,12 +559,14 @@
                     editable: true,
 
                     dayClick: function (date, jsEvent, view) {
+                           document.getElementById("msg").innerHTML = "";
                         //let date = $('#calendar').fullCalendar('getDate');
                            $('#txtMDate').val(new Date(date).toISOString().substring(0, 10));
-                           $('#txtMTime').val(new Date().toTimeString().substring(0, 5));
-                              // $('#txtMDate').val(date.toISOString().substring(0, 10));
-                              // $('#txtMTime').val(date.toTimeString().substring(0, 5));
-
+                           //$('#txtMTime').val(new Date().toTimeString().substring(0, 5));
+                          $('#cmdDelete').hide();
+                          $('#divEdit').hide();
+                          $('#trReccuring').show();
+                           $('#modalTitle').text("New Appointment");
                            $('#myModal').modal('show');
                         // $('#messagePastDate').hide();
                         // $('#dtpChurchDate').val(date.format());
@@ -516,7 +650,6 @@
                                 text: eventData.locations[i].street
                             }));
                           }
-                             debugger;
                         $('#lblMSpecialty').text(eventData.specialty);
                         changeLocation(newLocation);
                     },
@@ -536,6 +669,7 @@
                 $('#hdnMDoc').val('');
                 $('#txtMDoc').val('');
                 $('#lblMSpecialty').text('');
+                $('#cmbMAddr').empty();
                 $('#cmbMAddr').val('');  // .trigger('change');
                 $('#lblMCity').text('');
                 $('#lblMPhone').text('');
@@ -548,16 +682,23 @@
                 $('#lblMEditBy').text('');
                 $('#lblMCreateDate').text('');
                 $('#lblMCreateBy').text('');
+                $('#chkMakeAppointment').prop('checked', false);
+                $('#chkConfirmedAppointment').prop('checked', false);
+                $('#chkNursesAideAccompaniment').prop('checked', false);
+                $('#chkWait').prop('checked', false);
+                $('#chkInHouseVisit').prop('checked', false);
+                $('#chkReccuring').prop('checked', false);
+                ToggleReccuring(false);
             }
             function deleteAppointment() {
                 if ($('#hdnEventID').val() > 0) {
                     if (confirm("Are you sure you want to delete this appointment?")) {
                         $.ajax({
-                            type: "POST",
+                            type: "GET",
                             url: "index?handler=DeleteAppointment",
                             data: { id: $('#hdnEventID').val() },
                             success: function (data) {
-                                alert(data);
+                               // alert("success");
                                 $('#btnSearch').click();
                             },
                             error: function (error) {
@@ -567,5 +708,118 @@
                     }
                 }
              }
+             function saveAppointment() {
+                var sMsg = "";
+                if ($('#hdnMRes').val().length == 0) sMsg += "Please select resident. ";
+                if ($('#hdnMDoc').val().length == 0) sMsg += "Please select doctor. ";
+                 if($('#chkReccuring').prop('checked')){
+                   if ($('#txtMStartDate').val() == "") sMsg += "Please select start date.";
+                   if ($('#txtMEndDate').val() == "") sMsg += "Please select end date. ";
+                   if(sMsg.length == 0 && $('#txtMEndDate').val() < $('#txtMStartDate').val()) sMsg += "End date cannot be earlier than start date. ";
+                   var isAnyDaySelected = $('#chkSun').prop('checked') || $('#chkMon').prop('checked') || $('#chkTue').prop('checked') || $('#chkWed').prop('checked') || $('#chkThu').prop('checked') || $('#chkFri').prop('checked') || $('#chkSat').prop('checked');
+                   if (!isAnyDaySelected) sMsg += "Please select at least one day. ";
+                 }
+                 else {
+                    if ($('#txtMDate').val() == "") sMsg += "Please select date.";
+                    if ($('#txtMTime').val() == "") sMsg += "Please select time. ";
+                 }
+             if (sMsg.length > 0) {
+                   document.getElementById("msg").style = "padding:0px;text-align:center;font-weight:bold;color:red;";
+                   document.getElementById("msg").innerHTML = "ERROR: " + sMsg;
+                   alert(sMsg);
+                   return false;
+               }
+
+               var bRes = true; sMsg = "";
+               if($('#chkReccuring').prop('checked')) {
+                      var startDate = new Date($('#txtMStartDate').val());
+                      var endDate = new Date($('#txtMEndDate').val());
+                      while(startDate <= endDate) {
+                          var dayOfWeek = startDate.getDay();
+                          if ($('#chkSun').prop('checked') && dayOfWeek == 0 ||
+                              $('#chkMon').prop('checked') && dayOfWeek == 1 ||
+                              $('#chkTue').prop('checked') && dayOfWeek == 2 ||
+                              $('#chkWed').prop('checked') && dayOfWeek == 3 ||
+                              $('#chkThu').prop('checked') && dayOfWeek == 4 ||
+                              $('#chkFri').prop('checked') && dayOfWeek == 5 ||
+                              $('#chkSat').prop('checked') && dayOfWeek == 6) {
+                                  // Save the appointment for this date
+                                  $('#txtMDate').val(startDate.toISOString().substring(0, 10));
+                                  var frm = $('#frmAddEdit');
+                                  $.ajax({
+                                      type: "POST",
+                                      url: "index?handler=SaveAppointment",
+                                      type: frm.attr('method'),
+                                      data: frm.serialize(),
+                                      success: function (data) {
+                                          // Appointment saved successfully
+                                      },
+                                      error: function (xhr, status) {
+                                          sMsg +="ERROR: " + status + ", " + xhr.statusText;
+                                          bRes = false;
+                                      }
+                                  });
+                          }
+                          startDate.setDate(startDate.getDate() + 1);
+                      }
+                      if(!bRes) {
+                          document.getElementById("msg").style = "padding:0px;text-align:center;font-weight:bold;color:red;";
+                          document.getElementById("msg").innerHTML = sMsg;
+                          alert(sMsg);
+                          return false;
+                      }
+                      else {
+                          document.getElementById("msg").style = "padding:0px;text-align:center;font-weight:bold;color:green;";
+                          document.getElementById("msg").innerHTML = "The Appointments are saved successfully!";
+                          $('#myModal').modal('hide');
+                          $('#btnSearch').click();
+                          return true;
+                      }
+               }
+               else {
+                   var frm = $('#frmAddEdit');
+                document.getElementById("msg").innerHTML = "";
+                $.ajax({
+                    type: "POST",
+                    url: "index?handler=SaveAppointment",
+                    type: frm.attr('method'),
+                    data: frm.serialize(),
+                    success: function (data) {
+                   document.getElementById("msg").style = "padding:0px;text-align:center;font-weight:bold;color:green;";
+                   document.getElementById("msg").innerHTML = "The Appointment is saved successfully!";
+                        $('#myModal').modal('hide');
+                        $('#btnSearch').click();
+                        return true;
+                    },
+                    error: function (xhr, status) {
+                       document.getElementById("msg").style = "padding:0px;text-align:center;font-weight:bold;color:red;";
+                       document.getElementById("msg").innerHTML = "ERROR: " + status + ", " + xhr.statusText;
+                   }
+
+                });
+          }
+    }
+    function gridHeight() {
+            var iRet = screen.availHeight; 
+                    iRet = iRet - document.getElementById('appHeader').offsetHeight; 
+                    iRet = iRet - document.getElementById('appFooter').offsetHeight; 
+                    iRet = iRet - document.getElementById('hder').offsetHeight; 
+            return iRet - 300; // screen.availHeight - document.getElementById('appHeader').offsetHeight - document.getElementById('appFooter').offsetHeight - 100;
+    }
+    function gridWidth() { return screen.availWidth - 100; }
+    function ToggleReccuring(isChecked) {
+        if (isChecked) {
+                document.getElementById('trReoccurring').style.display = 'table-row';
+                document.getElementById('trWeekdays').style.display = 'table-row';
+                    $('#txtMStartDate').val($('#txtMDate').val());
+                    $('#txtMEndDate').val($('#txtMDate').val());
+                document.getElementById('trDateTime').style.display = 'none';
+        }
+        else {
+                document.getElementById('trReoccurring').style.display = 'none';
+                document.getElementById('trWeekdays').style.display = 'none';
+                document.getElementById('trDateTime').style.display = 'table-row';
+        }
+    }
      </script>
 }

@@ -1,0 +1,260 @@
+﻿@page
+@model Appointments.Pages.NursesModel
+@{
+    ViewData["Title"] = "Nurses";
+}
+<body>
+    <main style="height:stretch">
+        <h3 style="text-align: center; font-size: 25px" id="hder">Nurses</h3>
+
+        <div class="col-lg-12 col-md-12 col-sm-12 col-xl-12" style="text-align: center; background-color:white; width: 99%">
+            <div id="id_tablenurses" class="row sticky-top" style=" width: 99%; overflow-y: auto; overflow-x: auto; padding-left: 5px; padding-right: 5px;">
+                <table id="tblNurses" class="table-striped" align="center">
+                    <thead>
+                        <tr id="tabletop" style="background-color: royalblue; color: white; font-size: 18px;">
+                            <th></th>
+                            <th>Employee ID</th>
+                            <th>Last</th>
+                            <th>First</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var nurse in Model.lstNurses)
+                        {
+                            <tr style="text-align:left;">
+                                <td>
+                                    <input type="button" id="btnEdit_@nurse.EmployeeID" value="Edit" class="btn btn-link" onclick="setEdit($(this).closest('tr'));" />
+                                    <input type="button" id="btnDel_@nurse.EmployeeID" value="Delete" class="btn btn-link" onclick="setDelete($(this).closest('tr'));" />
+                                </td>
+                                <td>@nurse.EmployeeID</td>
+                                <td>@nurse.LastName</td>
+                                <td>@nurse.FirstName</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</body>
+
+@section Scripts {
+    <script src="~/js/site.js"></script>
+    <script src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
+    <link href="https://cdn.datatables.net/2.1.8/css/dataTables.dataTables.min.css" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.datatables.net/2.0.4/js/dataTables.min.js" defer></script>
+
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js" defer></script>
+    <script src="https://cdn.datatables.net/2.1.8/js/dataTables.js" defer></script>
+    <script src="https://cdn.datatables.net/2.1.8/js/dataTables.jqueryui.js" defer></script>
+    <script src="https://cdn.datatables.net/buttons/3.2.0/js/dataTables.buttons.js" defer></script>
+    <script src="https://cdn.datatables.net/buttons/3.2.0/js/buttons.jqueryui.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js" defer></script>
+    <script src="https://cdn.datatables.net/buttons/3.2.0/js/buttons.html5.min.js" defer></script>
+    <script src="https://cdn.datatables.net/buttons/3.2.0/js/buttons.print.min.js" defer></script>
+
+  @*   <script src=" https://cdn.datatables.net/scroller/2.4.3/js/dataTables.scroller.min.js" defer></script> *@
+@*     <script src=" https://cdn.datatables.net/scroller/2.4.3/js/scroller.bootstrap5.min.js" defer></script> *@
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+
+            var arr = [
+                            { extend: 'copy', className: 'btn btn-primary' },
+                            { extend: 'csv', className: 'btn btn-primary' },
+                            { extend: 'excel', className: 'btn btn-primary' },
+                            { extend: 'pdf', className: 'btn btn-primary' },
+                            { extend: 'print', className: 'btn btn-primary' }
+                        ];
+
+                arr.unshift({ extends: 'button', className: 'btn btn-primary', id: 'btnNewChoice', text: 'Add New', action: function () { setNew(); }});
+
+            $('#tblNurses').dataTable({
+                order: [[2, 'asc']],
+                destroy: true,
+                scroller: true,
+                "sPaginationType": "full_numbers",
+                scrollY:  gridHeight(),   //'550px',
+                // contentHeight:
+                "iDisplayLength": 100,
+               columnDefs: [
+                    { targets: [0], searchable: false },
+                    { targets: [0], orderable: false },
+                ],
+                layout: {
+                    topstart: 'pageLength',
+                    top: {
+                        buttons: arr,
+                    },
+                    topend: 'search',
+                    bottomend: 'paging',
+                },
+            });
+         });
+
+        function setEdit(trObj) {
+            var nurseId = $(trObj).find("td").eq(1).text();
+            for(var i = 1; i<4; i++){
+                    var val = $(trObj).find("td").eq(i).text();
+                    var tdObj = $(trObj).find("td").eq(i);
+                    $(tdObj).data('originalValue', val);
+                    $(tdObj).empty();
+                    var input = $('<input type="text" class="form-control" ' + (i==1? 'readonly' : '') + ' />').val(val);
+                    $(tdObj).append(input);
+            }
+            var tdObj =arguments[0].find("td").eq(0);
+            $(tdObj).empty();
+            $(tdObj).html('<input type="button" id="btnUpdate_' + nurseId + '" value="Update" class="btn btn-link" onclick="setUpdate($(this).closest(\'tr\'), false);" />' +
+                        '<input type="button" id="btnDel_' + nurseId + '" value="Cancel" class="btn btn-link" onclick="setCancel($(this).closest(\'tr\'));" />');
+            enableNew();
+        }
+        function setDelete(trObj) {
+            var nurseId = $(trObj).find("td").eq(1).text();
+            if (!confirm('Are you sure you want to delete this nurse?')) {
+                return;
+            }
+            DeleteNurse(nurseId);
+        }
+        function setCancel(trObj) {
+            var nurseId = $(trObj).find("td").eq(1).data('originalValue');
+            var lastName = $(trObj).find("td").eq(2).data('originalValue');  // $(trObj).find("td").eq(2).find("input").val();
+            var firstName = $(trObj).find("td").eq(3).data('originalValue');  //.val();
+            $(trObj).find("td").eq(1).empty().text(nurseId);
+            $(trObj).find("td").eq(2).empty().text(lastName);
+            $(trObj).find("td").eq(3).empty().text(firstName);
+            var tdObj =$(trObj).find("td").eq(0);
+            $(tdObj).empty();
+            $(tdObj).html('<input type="button" id="btnEdit_' + nurseId + '" value="Edit" class="btn btn-link" onclick="setEdit($(this).closest(\'tr\'));" />' +
+                        '<input type="button" id="btnDel_' + nurseId + '" value="Delete" class="btn btn-link" onclick="setDelete($(this).closest(\'tr\'));" />');
+                enableNew();
+        }
+        function setUpdate(trObj, bNew) {
+            var nurseId = $(trObj).find("td").eq(1).find("input").val();
+            var lastName = $(trObj).find("td").eq(2).find("input").val();
+            var firstName = $(trObj).find("td").eq(3).find("input").val();
+            if(SaveNurse(trObj, bNew)){
+                $(trObj).find("td").eq(1).empty().text(nurseId);
+                $(trObj).find("td").eq(2).empty().text(lastName);
+                $(trObj).find("td").eq(3).empty().text(firstName);
+                var tdObj =$(trObj).find("td").eq(0);
+                $(tdObj).empty();
+                $(tdObj).html('<input type="button" id="btnEdit_' + nurseId + '" value="Edit" class="btn btn-link" onclick="setEdit($(this).closest(\'tr\'));" />' +
+                            '<input type="button" id="btnDel_' + nurseId + '" value="Delete" class="btn btn-link" onclick="setDelete($(this).closest(\'tr\'));" />');
+                enableNew();
+            }
+        }
+        function setNew(){
+                var nurseId = 0;
+                var table = document.getElementById("tblNurses");
+                var row = table.insertRow(0);  //          .rows.add().draw().node();
+                for(var i = 0; i<4; i++){
+                var  cell = row.insertCell(i);
+                switch(i){
+                    case 0:
+                        $(cell).html('<input type="button" id="btnUpdate_' + nurseId + '" value="Create" class="btn btn-link" onclick="setUpdate($(this).closest(\'tr\'), true);" />' +
+                            '<input type="button" id="btnDel_' + nurseId + '" value="Cancel" class="btn btn-link" onclick="$(this).closest(\'tr\').remove(); enableNew();" />');
+                        break;
+                    default:
+                        var input = $('<input type="text" class="form-control" />');
+                        $(cell).append(input);
+                    }
+                }
+                enableNew();
+                row.scrollIntoView({
+                    behavior: 'smooth', // Smooth animation
+                    block: 'nearest', // Vertical alignment
+                    inline: 'nearest' // Horizontal alignment
+                });
+        }
+        function enableNew(){
+            var cnt = ($('input[value="Update"]').length > 0 || $('input[value="Create"]').length > 0);
+            var t = $('#tblNurses').DataTable();
+            if(cnt) t.buttons().disable();
+            else t.buttons().enable();
+        }
+        function SaveNurse(trObj, bNew)
+        {
+            var nurseId = $(trObj).find("td").eq(1).find("input").val();
+            var lastName = $(trObj).find("td").eq(2).find("input").val();
+            var firstName = $(trObj).find("td").eq(3).find("input").val();
+
+           if(lastName.trim().length == 0){
+                alert("Last name is required");
+                return false;
+            }
+            if(firstName.trim().length == 0){
+                alert("First name is required");
+                return false;
+            }
+            if(nurseId.trim().length == 0){
+                alert("Employee ID is required");
+                return false;
+            }
+            var staff   = {
+                lastName: lastName,
+                firstName: firstName,
+                employeeId: nurseId
+            };
+            document.getElementById("msg").innerHTML = "";
+            $.ajax({
+                type: "GET",
+                url: "Nurses?handler=SaveNurse",
+                data: { firstName: firstName, lastName: lastName, employeeId: nurseId, isNew: bNew },
+                success: function (data) {
+                    document.getElementById("msg").style = "padding:0px;text-align:center;font-weight:bold;color:green;";
+                    document.getElementById("msg").innerHTML = "The Nurse is saved successfully!";
+                    location.reload();
+                    return true;
+                },
+                error: function (xhr, status) {
+                    document.getElementById("msg").style = "padding:0px;text-align:center;font-weight:bold;color:red;";
+                    document.getElementById("msg").innerHTML = "ERROR: " + status + ", " + xhr.statusText;
+                    return false;
+                }
+            });
+        }
+        function DeleteNurse(id)
+        {
+            document.getElementById("msg").innerHTML = "";
+            $.ajax({
+                type: "GET",
+                url: "Nurses?handler=DeleteNurseById",
+                data: { id: id },
+                success: function (data) {
+                    document.getElementById("msg").style = "padding:0px;text-align:center;font-weight:bold;color:green;";
+                    document.getElementById("msg").innerHTML = "The Nurse is deleted successfully!";
+                    location.reload();
+                    return true;
+                },
+                error: function (xhr, status) {
+                    document.getElementById("msg").style = "padding:0px;text-align:center;font-weight:bold;color:red;";
+                    document.getElementById("msg").innerHTML = "ERROR: " + status + ", " + xhr.statusText;
+                    return false;
+                }
+            });
+        }
+        function formatDate(sDate){
+            if(sDate == null || sDate == '')
+                return '';
+            var date = new Date(sDate);
+            if(date.getFullYear() <1900)
+                    return '';
+            var month = (date.getMonth() + 1).toString().padStart(2, '0');
+            var day = date.getDate().toString().padStart(2, '0');
+            var year = date.getFullYear();
+            var hours = date.getHours().toString().padStart(2, '0');
+            var minutes = date.getMinutes().toString().padStart(2, '0');
+            return month + '/' + day + '/' + year + ' ' + hours + ':' + minutes;
+        }
+        function gridHeight() {
+        var iRet = screen.availHeight;
+                iRet = iRet - document.getElementById('appHeader').offsetHeight;
+                iRet = iRet - document.getElementById('appFooter').offsetHeight;
+                iRet = iRet - document.getElementById('hder').offsetHeight;
+        return iRet - 400; // screen.availHeight - document.getElementById('appHeader').offsetHeight - document.getElementById('appFooter').offsetHeight - 100;
+        }
+    </script>
+}
+

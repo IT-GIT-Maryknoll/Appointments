@@ -1,0 +1,311 @@
+﻿@page
+@model Appointments.Pages.DriversModel
+@{
+    ViewData["Title"] = "Drivers";
+}
+<body>
+    <main style="height:stretch">
+        <h3 style="text-align: center; font-size: 25px" id="hder">Drivers</h3>
+        <div class="col-lg-12 col-md-12 col-sm-12 col-xl-12" style="text-align: center; background-color:white; width: 99%">
+            <div id="id_tabledrivers" class="row sticky-top" style=" width: 99%; overflow-y: auto; overflow-x: auto; padding-left: 5px; padding-right: 5px;">
+                <table id="tblDrivers" class="table-striped" align="center">
+                    <thead>
+                        <tr id="tabletop" style="background-color: royalblue; color: white; font-size: 18px;">
+                            <th></th>
+                            @* <th>Driver ID</th> *@
+                            <th>Last</th>
+                            <th>First</th>
+                            <th>Title</th>
+                            <th>Priority</th>
+                            <th>Inactive</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var driver in Model.lstDrivers)
+                        {
+                            <tr style="text-align:left;" data-driverId="@driver.DriverID">
+                                <td>
+                                    <input type="button" id="btnEdit_@driver.DriverID" value="Edit" class="btn btn-link" onclick="setEdit($(this).closest('tr'));" />
+                                    <input type="button" id="btnDel_@driver.DriverID" value="Delete" class="btn btn-link" onclick="setDelete($(this).closest('tr'));" />
+                                </td>
+                                @* <td>@driver.DriverID</td> *@
+                                <td>@driver.Last</td>
+                                <td>@driver.First</td>
+                                <td>@driver.Title</td>
+                                <td>@driver.Priority</td>
+                                <td>
+                                    @if (bool.Parse(@driver.InActive.ToString()))
+                                    {
+                                        <input id="chk_@driver.DriverID" name="chk_@driver.DriverID" type="checkbox" disabled="disabled" checked="checked" />
+                                    }
+                                    else
+                                    {
+                                        <input id="chk_@driver.DriverID" name="chk_@driver.DriverID" type="checkbox" disabled="disabled" />
+                                    }
+                                 </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</body>
+
+@section Scripts {
+    <script src="~/js/site.js"></script>
+
+<script src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
+<link href="https://cdn.datatables.net/2.1.8/css/dataTables.dataTables.min.css" rel="stylesheet" type="text/css" />
+<script src="https://cdn.datatables.net/2.0.4/js/dataTables.min.js" defer></script>
+
+<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js" defer></script>
+<script src="https://cdn.datatables.net/2.1.8/js/dataTables.js" defer></script>
+<script src="https://cdn.datatables.net/2.1.8/js/dataTables.jqueryui.js" defer></script>
+<script src="https://cdn.datatables.net/buttons/3.2.0/js/dataTables.buttons.js" defer></script>
+<script src="https://cdn.datatables.net/buttons/3.2.0/js/buttons.jqueryui.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js" defer></script>
+<script src="https://cdn.datatables.net/buttons/3.2.0/js/buttons.html5.min.js" defer></script>
+<script src="https://cdn.datatables.net/buttons/3.2.0/js/buttons.print.min.js" defer></script>
+
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+
+            var arr = [
+                            { extend: 'copy', className: 'btn btn-primary' },
+                            { extend: 'csv', className: 'btn btn-primary' },
+                            { extend: 'excel', className: 'btn btn-primary' },
+                            { extend: 'pdf', className: 'btn btn-primary' },
+                            { extend: 'print', className: 'btn btn-primary' }
+                        ];
+
+                arr.unshift({ extends: 'button', className: 'btn btn-primary', id: 'btnNewDriver', text: 'Add New', action: function () { setNew(); }});
+
+            $('#tblDrivers').dataTable({
+                order: [[1, 'asc']],
+                destroy: true,
+               "sPaginationType": "full_numbers",
+                scrollY: gridHeight(),   //'500px',
+                // contentHeight: 
+                "iDisplayLength": 100,
+               columnDefs: [
+                    { targets: [0], searchable: false },
+                    { targets: [0], orderable: false },
+                    { targets: [5], searchable: false },
+                    { targets: [5], orderable: false },
+                    // { targets: [1], visible: false, searchable: false, orderable: false },
+                ],
+                layout: {
+                    topstart: 'pageLength',
+                    top: {
+                        buttons: arr,
+                    },
+                    topend: 'search',
+                    bottomend:  'paging',
+                },
+            });
+            $($.fn.dataTable.tables(true)).DataTable().columns.adjust();
+            $('.dt-buttons').css('border', 'none');
+        });
+
+        function setEdit(trObj) {
+            var driverId = $(trObj).data(driverId).driverid;
+            for(var i = 1; i < 6; i++){
+                if(i < 5) {
+                    var val = $(trObj).find("td").eq(i).text();
+                    var tdObj = $(trObj).find("td").eq(i);
+                    $(tdObj).data('originalValue', val);
+                    $(tdObj).empty();
+                    var input = $('<input ' + (i <4 ? 'type="text"' : 'type="number" min="0" value="0"') + ' class="form-control"  />').val(val);
+                    $(tdObj).append(input);
+                }
+                else{
+                    var val = $(trObj).find("td").eq(i).find("input").prop('checked');
+                    var tdObj = $(trObj).find("td").eq(i);
+                    $(tdObj).data('originalValue', val);
+                    $(trObj).find("td").eq(i).find("input").prop('disabled', false);
+                  // $(tdObj).empty();
+                    // var input = $('<input type="checkbox" class="form-control" />').prop('checked', val);
+                    // $(tdObj).append(input);
+                }
+            }
+
+            var tdObj =$(trObj).find("td").eq(0);
+            $(tdObj).empty();
+            $(tdObj).html('<input type="button" id="btnUpdate_' + driverId + '" value="Update" class="btn btn-link" onclick="setUpdate($(this).closest(\'tr\'), false);" />' +
+                        '<input type="button" id="btnCancel_' + driverId + '" value="Cancel" class="btn btn-link" onclick="setCancel($(this).closest(\'tr\'));" />');
+            enableNew();
+        }
+        function setDelete(trObj) {
+            var driverId = $(trObj).data(driverId).driverid;
+            if (!confirm('Are you sure you want to delete this driver?')) {
+                return;
+            }
+            DeleteDriver(driverId);
+        }
+        function setCancel(trObj) {
+            var driverId = $(trObj).data(driverId).driverid;
+            var lastName = $(trObj).find("td").eq(1).data('originalValue');  // $(trObj).find("td").eq(2).find("input").val();
+            var firstName = $(trObj).find("td").eq(2).data('originalValue');  //.val();
+            var title = $(trObj).find("td").eq(3).data('originalValue');
+            var priority = $(trObj).find("td").eq(4).data('originalValue');
+            var inactive = $(trObj).find("td").eq(5).data('originalValue');
+
+            $(trObj).find("td").eq(1).empty().text(lastName);
+            $(trObj).find("td").eq(2).empty().text(firstName);
+            $(trObj).find("td").eq(3).empty().text(title);
+            $(trObj).find("td").eq(4).empty().text(priority);
+            $(trObj).find("td").eq(5).find("input").prop('checked', inactive);
+            $(trObj).find("td").eq(5).find("input").prop('disabled', true);
+
+            var tdObj =$(trObj).find("td").eq(0);
+            $(tdObj).empty();
+            $(tdObj).html('<input type="button" id="btnEdit_' + driverId + '" value="Edit" class="btn btn-link" onclick="setEdit($(this).closest(\'tr\'));" />' +
+                        '<input type="button" id="btnDel_' + driverId + '" value="Delete" class="btn btn-link" onclick="setDelete($(this).closest(\'tr\'));" />');
+                enableNew();
+        }
+        function setUpdate(trObj, bNew) {
+            var driverId = $(trObj).data(driverId).driverid;
+            var lastName = $(trObj).find("td").eq(1).find("input").val();
+            var firstName = $(trObj).find("td").eq(2).find("input").val();
+            var title = $(trObj).find("td").eq(3).find("input").val();
+            var priority = $(trObj).find("td").eq(4).find("input").val();
+            var inactive = $(trObj).find("td").eq(5).find("input").prop('checked');
+            if(SaveDriver(trObj, bNew)){
+                //$(trObj).find("td").eq(1).empty().text(driverId);
+                $(trObj).find("td").eq(1).empty().text(lastName);
+                $(trObj).find("td").eq(2).empty().text(firstName);
+                $(trObj).find("td").eq(3).empty().text(title);
+                $(trObj).find("td").eq(4).empty().text(priority);
+                $(trObj).find("td").eq(5).find("input").prop('checked', inactive);
+                $(trObj).find("td").eq(5).find("input").prop('disabled', true);
+                var tdObj =$(trObj).find("td").eq(0);
+                $(tdObj).empty();
+                $(tdObj).html('<input type="button" id="btnEdit_' + driverId + '" value="Edit" class="btn btn-link" onclick="setEdit($(this).closest(\'tr\'));" />' +
+                            '<input type="button" id="btnDel_' + driverId + '" value="Delete" class="btn btn-link" onclick="setDelete($(this).closest(\'tr\'));" />');
+                enableNew();
+            }
+        }
+        function setNew(){
+            var driverId = 0;
+            var row = document.getElementById("tblDrivers").insertRow(0);  //          .rows.add().draw().node();
+            for(var i = 0; i<6; i++){
+            var  cell = row.insertCell(i);
+            switch(i){
+                case 0:
+                    $(cell).html('<input type="button" id="btnUpdate_' + driverId + '" value="Create" class="btn btn-link" onclick="setUpdate($(this).closest(\'tr\'), true);" />' +
+                        '<input type="button" id="btnCancel_' + driverId + '" value="Cancel" class="btn btn-link" onclick="$(this).closest(\'tr\').remove(); enableNew();" />');
+                    break;
+                case 5:
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    cell.appendChild(checkbox);
+                    break;
+                default:
+                    var input = $('<input ' +(i <4 ? 'type="text"' : 'type="number" min="0" value="0"') + ' class="form-control" />');
+                    $(cell).append(input);
+                }
+            }
+            enableNew();
+            row.scrollIntoView({
+                behavior: 'smooth', // Smooth animation
+                block: 'nearest', // Vertical alignment
+                inline: 'nearest' // Horizontal alignment
+            });
+         }
+        function enableNew(){
+            var cnt = ($('input[value="Update"]').length > 0 || $('input[value="Create"]').length > 0);
+            var t = $('#tblDrivers').DataTable();
+            if(cnt) t.buttons().disable();
+            else t.buttons().enable();
+        }
+        function SaveDriver(trObj, bNew)
+        {
+            var driverId = $(trObj).data(driverId).driverid;
+            var lastName = $(trObj).find("td").eq(1).find("input").val();
+            var firstName = $(trObj).find("td").eq(2).find("input").val();
+            var title = $(trObj).find("td").eq(3).find("input").val();
+            var priority = $(trObj).find("td").eq(4).find("input").val();
+            var inactive = $(trObj).find("td").eq(5).find("input").prop('checked');
+
+           if(lastName.trim().length == 0){
+                alert("Last name is required");
+                return false;
+            }
+            if(firstName.trim().length == 0){
+                alert("First name is required");
+                return false;
+            }
+            //if(!(typeof priority.trim() === 'number' && Number.isFinite(priority))) {
+            if(isNaN(priority)) {
+                alert ("Priority is not numeric");
+                return false;
+            }
+            // alert(Number.isInteger(priority)); alert(Number.isInteger(parseInt(priority)))
+            // if(!Number.isInteger(parseInt(priority))) {
+            //     alert ("Priority must be integer");
+            //     return false;
+            // }
+            document.getElementById("msg").innerHTML = "";
+            $.ajax({
+                type: "GET",
+                url: "Drivers?handler=SaveDriver",
+                data: { firstName: firstName, lastName: lastName, driverId: driverId, title: title, priority: parseInt(priority), inactive: inactive, isNew: bNew },
+                success: function (data) {
+                    document.getElementById("msg").style = "padding:0px;text-align:center;font-weight:bold;color:green;";
+                    document.getElementById("msg").innerHTML = "The Driver is saved successfully!";
+                    location.reload();
+                    return true;
+                },
+                error: function (xhr, status) {
+                    document.getElementById("msg").style = "padding:0px;text-align:center;font-weight:bold;color:red;";
+                    document.getElementById("msg").innerHTML = "ERROR: " + status + ", " + xhr.statusText;
+                    return false;
+                }
+            });
+        }
+        function DeleteDriver(id)
+        {
+            document.getElementById("msg").innerHTML = "";
+            $.ajax({
+                type: "GET",
+                url: "Drivers?handler=DeleteDriverById",
+                data: { id: id },
+                success: function (data) {
+                    document.getElementById("msg").style = "padding:0px;text-align:center;font-weight:bold;color:green;";
+                    document.getElementById("msg").innerHTML = "The Nurse is deleted successfully!";
+                    location.reload();
+                    return true;
+                },
+                error: function (xhr, status) {
+                    document.getElementById("msg").style = "padding:0px;text-align:center;font-weight:bold;color:red;";
+                    document.getElementById("msg").innerHTML = "ERROR: " + status + ", " + xhr.statusText;
+                    return false;
+                }
+            });
+        }
+        function formatDate(sDate){
+            if(sDate == null || sDate == '')
+                return '';
+            var date = new Date(sDate);
+            if(date.getFullYear() <1900)
+                    return '';
+            var month = (date.getMonth() + 1).toString().padStart(2, '0');
+            var day = date.getDate().toString().padStart(2, '0');
+            var year = date.getFullYear();
+            var hours = date.getHours().toString().padStart(2, '0');
+            var minutes = date.getMinutes().toString().padStart(2, '0');
+            return month + '/' + day + '/' + year + ' ' + hours + ':' + minutes;
+        }
+        function gridHeight() {
+        var iRet = screen.availHeight;
+                iRet = iRet - document.getElementById('appHeader').offsetHeight;
+                iRet = iRet - document.getElementById('appFooter').offsetHeight;
+                iRet = iRet - document.getElementById('hder').offsetHeight;
+        return iRet - 400; // screen.availHeight - document.getElementById('appHeader').offsetHeight - document.getElementById('appFooter').offsetHeight - 100;
+        }
+    </script>
+}

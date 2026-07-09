@@ -1,0 +1,446 @@
+﻿@page
+@model Appointments.Pages.DoctorsModel
+@{
+    bool bLoadActive = Model.bLoadActive;
+}
+<body>
+<main style="height:stretch">
+    <h3 style="text-align: center; font-size: 25px" id="hder">Doctors</h3>
+    
+    <div class="col-lg-12 col-md-12 col-sm-12 col-xl-12" style="text-align: center; background-color:white; width: 99%">
+        <div id="id_tabledoctors" class="row sticky-top" style=" width: 99%; overflow-y: auto; overflow-x: auto; padding-left: 5px; padding-right: 5px;">
+            <table id="tblDoctors" class="table-striped" align="center">
+                    <thead>
+             <tr id="tabletop" style="background-color: royalblue; color: white; font-size: 18px;">
+                <th></th>
+                <th>Last</th>
+                <th>First</th>
+                <th>Company</th>
+                <th>Title</th>
+                <th>Specialty</th>
+                <th>Deleted</th>
+                @* <th style="white-space:nowrap;"><span>Active Only</span>&nbsp;<input type="checkbox" id="chkActive" @(Model.bLoadActive ? "checked" : "") onclick="location.reload();" /></th> *@
+                            <th style="white-space:nowrap;"><a style="padding-left:20px;color:yellow;" asp-page="./Doctors" asp-route-bActive=@(!bLoadActive ? "true" : "false")>@(bLoadActive ? "Load All" : "Load Active")</a></th>
+            </tr>
+                    </thead>
+            <tbody>
+            @foreach (var doctor in Model.lstDoctors)
+            {
+                <tr style="text-align:left;">
+                    <td><input type="button" id="btnEdit_@doctor.DoctorKey" value="Edit" class="btn btn-link" onclick="setEdit(@doctor.DoctorKey);" /></td>
+                    <td>@doctor.Last</td>
+                    <td>@doctor.First</td>
+                    <td>@doctor.Company</td>
+                    <td>@doctor.Title</td>
+                    <td>@doctor.Specialty</td>
+                    <td><input type="checkbox" id="chkDeleted" disabled @(doctor.IsDeleted ? "checked" : "") /></td>
+                    <td></td>
+                </tr>
+            }
+                    </tbody>
+                </table>
+</div></div>
+
+<div id="myModal" class="modal fade" role="dialog" tabindex="-1" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle" class="modal-title fs-5" >New Doctor</h2>
+                @* <button type="button" class="close" data-bs-dismiss="modal">&times;</button> *@
+             </div>
+                <div class="modal-body">
+                <form id="frmAddEditDoc" name="frmAddEditDoc" class="col-md-12 form-horizontal" method="post">
+                    <input type="hidden" id="hdnDoctorKey"  name="hdnDoctorKey" value="" />
+                    <input type="hidden" id="hdnLocations" name="hdnLocations" value="" />
+                    <table class="table table-borderless">
+                        <tr>
+                            <td class="col-md-2"><label for="txtLast" class="form-label">Last Name</label></td>
+                            <td class="col-md-3"><input type="text" id="txtLast" name="txtLast" class="form-control" onchange="setDirty();" /></td>
+                            <td class="col-md-2"><label for="txtFirst" class="form-label">First Name</label></td>
+                            <td class="col-md-3"><input type="text" id="txtFirst" name="txtFirst" class="form-control" onchange="setDirty();" /></td>
+                        </tr>
+                        <tr>
+                            <td><label for="txtCompany" class="form-label">Company</label></td>
+                            <td><input type="text" id="txtCompany" name="txtCompany" class="form-control" onchange="setDirty();" /></td>
+                            <td><label for="txtTitle" class="form-label">Title</label></td>
+                            <td><input type="text" id="txtTitle" name="txtTitle" class="form-control" onchange="setDirty();" /></td>
+                        </tr>
+                        <tr>
+                            <td><label for="txtSpecialty" class="form-label">Specialty</label></td>
+                            <td><input type="text" id="txtSpecialty" name="txtSpecialty" class="form-control" onchange="setDirty();" /></td>
+                            <td><label for="chkDeletedF" class="form-label">Deleted</label></td>
+                            <td><input type="checkbox" id="chkDeletedF" name="chkDeletedF" onchange="setDirty();" /></td>
+
+                        </tr>
+                    </table>
+                    <hr/>
+                            <h3 id="modalLocationTitle" class="modal-title fs-5">Locations&nbsp;&nbsp;
+                                <input type="button" id="btnAddLocation" value="Add" class="btn btn-link" onclick="setNewLoc();" />
+                            </h3>
+                    <div id="divLocations" class="form-group">
+                        <table id="tblLocations" class="table table-borderless">
+                            <thead>
+                                <tr style="background-color: lightgray;">
+                                    <th></th>
+                                    <th style="display:none;">Location Key</th>
+                                    <th>Address</th>
+                                    <th>City</th>
+                                    <th>Phone</th>
+                                    <th>Fax</th>
+                                    <th style="white-space:nowrap;">In House</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tblLocationsBody">
+                                @* Location rows will be dynamically added here *@
+                             </tbody>
+                         </table>
+                    </div>
+
+                    <table style="width:100%; border-top:1px solid #dee2e6; margin-top:10px;">
+                        <tr>
+                            <td>
+                                <div class="modal-sm form-control" id="divEdit" name="divEdit" style="vertical-align:top; border: 0px;">
+                                    Modified on:&nbsp;<label id="lblMEditDate"></label>&nbsp;&nbsp;by:&nbsp;<label id="lblMEditBy"></label><br />
+                                    Created on:&nbsp;<label id="lblMCreateDate"></label>&nbsp;&nbsp;by:&nbsp;<label id="lblMCreateBy"></label>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="modal-static">
+                                    <button type="button" id="btnSave" class="btn btn-primary" onclick="if(SaveDoctor()) { clearForm(); IsDirty = false; }">Save</button>
+                                    <button type="button" id="cmdDelete" name="cmdDelete" class="btn btn-primary" data-bs-dismiss="modal" onclick="deleteDoctor(); clearForm(); IsDirty = false;">Delete</button>
+@*                                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="if (IsDirty) {if (confirm('Save changes?')) if(SaveDoctor()) {clearForm(); IsDirty = false;} else { event.preventDefault(); return false;}} clearForm(); IsDirty = false;">Close</button>
+ *@                              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="if (IsDirty && confirm('Save changes?')) { if(!SaveDoctor()) {clearForm(); IsDirty = false; return false; }} clearForm(); IsDirty = false;">Close</button>
+
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+</main></body>
+
+@section Scripts {
+    <script src="~/js/site.js"></script>
+<script src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
+<link href="https://cdn.datatables.net/2.1.8/css/dataTables.dataTables.min.css" rel="stylesheet" type="text/css" />
+<script src="https://cdn.datatables.net/2.0.4/js/dataTables.min.js" defer></script>
+
+<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js" defer></script>
+<script src="https://cdn.datatables.net/2.1.8/js/dataTables.js" defer></script>
+<script src="https://cdn.datatables.net/2.1.8/js/dataTables.jqueryui.js" defer></script>
+<script src="https://cdn.datatables.net/buttons/3.2.0/js/dataTables.buttons.js" defer></script>
+<script src="https://cdn.datatables.net/buttons/3.2.0/js/buttons.jqueryui.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js" defer></script>
+<script src="https://cdn.datatables.net/buttons/3.2.0/js/buttons.html5.min.js" defer></script>
+<script src="https://cdn.datatables.net/buttons/3.2.0/js/buttons.print.min.js" defer></script>
+  <script type="text/javascript">
+   var IsDirty = false;
+    
+   $(document).ready(function () {
+            $('#myModal').modal({
+            backdrop: 'static',
+            keyboard: false
+            });
+
+        var arr = [
+                        { extend: 'copy', className: 'btn btn-primary' },
+                        { extend: 'csv', className: 'btn btn-primary' },
+                        { extend: 'excel', className: 'btn btn-primary' },
+                        { extend: 'pdf', className: 'btn btn-primary' },
+                        { extend: 'print', className: 'btn btn-primary' }
+                    ];
+
+            arr.unshift({ extends: 'button', className: 'btn btn-primary', id: 'btnNewChoice', text: 'Add New', action: function () { setRowChoiceNew(); }});
+        // }
+        $('#tblDoctors').dataTable({
+            order: [[1, 'asc']],
+            destroy: true,
+            "sPaginationType": "full_numbers",
+            //contentHeight: gridHeight(), 
+           scrollY: gridHeight(),   //'550px',
+            "iDisplayLength": 100,
+           columnDefs: [
+                { targets: [0,6,7], searchable: false }, 
+                { targets: [0,6,7], orderable: false },
+                // { targets: [6], orderable: false },
+                //     { targets: [7], orderable: false }
+            ],
+            layout: {
+                topstart: 'pageLength',
+                top: {
+                    buttons: arr, 
+                },
+                topend: 'search',
+                bottomend: 'paging',
+            },
+        });
+     });
+     function setEdit(doctorKey) {
+        var url = 'Doctors?handler=GetDoctorById&id=' + doctorKey;
+        $.get(url, function (data) {
+            $('#modalTitle').text('Edit Doctor');
+            $('#hdnDoctorKey').val(data.doctorKey);
+            $('#txtLast').val(data.last);
+            $('#txtFirst').val(data.first);
+            $('#txtCompany').val(data.company);
+            $('#txtTitle').val(data.title);
+            $('#txtSpecialty').val(data.specialty);
+            $('#lblMEditDate').text(formatDate(data.modDate));
+            $('#lblMEditBy').text(data.modifiedBy);
+            $('#lblMCreateDate').text(formatDate(data.addDate));
+            $('#lblMCreateBy').text(data.createdBy);
+                      $('#chkDeletedF').prop("checked", data.isDeleted);
+              for(var i = 0; i < data.locations.length; i++) {
+                    var location = data.locations[i];
+                    var row = '<tr id="rowLoc_' + location.locationID + '">' +
+                    '<td><input type="button" id="btnEditLoc_' + location.locationID + '" value="Edit" class="btn btn-link" onclick="setEditLoc($(this).closest(\'tr\'));" />' +
+                            (data.locations.length > 1 ? '<input type="button" id="btnDelLoc_' + location.locationID + '" value="Delete" class="btn btn-link" onclick="setDeleteLoc($(this).closest(\'tr\'));setDirty();" /></td>' : '') +
+                        '<td style="display:none;" id="cid_" ' + i + '" name=cid_" ' + i + '">' + location.locationID + '</td>' +
+                        '<td class="col-md-3" id="cstreet_" ' + i + '" name=cstreet_" ' + i + '">' + location.street + '</td>' +
+                        '<td class="col-md-3" id="ccity_" ' + i + '" name=ccity_" ' + i + '">' + location.city + '</td>' +
+                        '<td class="col-md-3" id="cphone_" ' + i + '" name=cphone_" ' + i + '">' + location.phone + '</td>' +
+                        '<td class="col-md-3" id="cfax_" ' + i + '" name=cfax_" ' + i + '">' + location.fax + '</td>' +
+                        '<td><input type="checkbox" id="chkInHouse_' + location.locationID + '" name="chkInHouse_' + location.locationID +  '" disabled  ' + (location.inHouse ? 'checked' : '') + ' /></td>' +
+                '</tr>';
+                    $('#tblLocationsBody').append(row);
+                }
+               enableNew();
+              $('#myModal').modal('show');
+         });
+     }
+
+     function deleteDoctor() {
+        var doctorKey = $('#hdnDoctorKey').val();
+        if (doctorKey == '') {
+            alert('No doctor selected for deletion.');
+            return;
+        }
+        if (!confirm('Are you sure you want to delete this doctor?')) {
+            return;
+        }
+        $.get('Doctors?handler=DeleteDoctorById', { id: doctorKey }, function (data) {
+            if (data.success) {
+                alert('Doctor deleted successfully.');
+                location.reload(); // Refresh the page to show updated data
+            } else {
+                    alert('Error deleting doctor: ' + TempData["Message"]);
+            }
+        });
+     }
+      function clearForm() {
+        $('#hdnDoctorKey').val('');
+        $('#txtLast').val('');
+        $('#txtFirst').val('');
+        $('#txtCompany').val('');
+        $('#txtTitle').val('');
+        $('#txtSpecialty').val('');
+        $('#lblMEditDate').text('');
+        $('#lblMEditBy').text('');
+        $('#lblMCreateDate').text('');
+        $('#lblMCreateBy').text('');
+        $('#chkDeletedF').prop('checked', false);
+        $('#tblLocationsBody').empty();
+        $("#hdnLocations").val('');
+     }
+      function setRowChoiceNew() {
+         clearForm();
+         $('#modalTitle').text('New Doctor');
+         $('#myModal').modal('show');
+     }
+    function setEditLoc(trObj) {
+        var locationId = $(trObj).find("td").eq(1).text();
+        for(var i = 2; i<7; i++){
+            if(i<6){
+                var val = $(trObj).find("td").eq(i).text();
+                var tdObj = $(trObj).find("td").eq(i);
+                $(tdObj).data('originalValue', val);
+                $(tdObj).empty();
+                var input = $('<input type="text" class="form-control" />').val(val);
+                $(tdObj).append(input);
+            }
+            else{
+                var val = $(trObj).find("td").eq(i).find("input").prop('checked');
+                var tdObj = $(trObj).find("td").eq(i);
+                $(tdObj).data('originalValue', val);
+                // $(tdObj).empty();
+                // var input = $('<input type="checkbox" class="form-check-input" />').prop('checked', val);
+                // $(tdObj).append(input);
+                          $(trObj).find("td").eq(i).find("input").prop('disabled', false);
+                 }
+                //  var val = $(trObj).find("td").eq(i).text();
+                // var tdObj = $(trObj).find("td").eq(i);
+                // $(tdObj).data('originalValue', val);
+                // $(tdObj).empty();
+                // var input = $('<input type="text" class="form-control" />').val(val);
+                // $(tdObj).append(input);
+        }
+        var tdObj =arguments[0].find("td").eq(0);
+        $(tdObj).empty();
+             $(tdObj).html('<input type="button" id="btnUpdateLoc_' + locationId + '" value="Update" class="btn btn-link" onclick="setUpdateLoc($(this).closest(\'tr\')); setDirty();" />' +
+                    '<input type="button" id="btnCancelLoc_' + locationId + '" value="Cancel" class="btn btn-link" onclick="setCancelLoc($(this).closest(\'tr\'));" />');
+        $("#btnAddLocation").prop("disabled", true);
+    }
+    function setDeleteLoc(trObj) {     
+        var locationId = $(trObj).find("td").eq(1).text();
+        if (!confirm('Are you sure you want to delete this location?')) {
+            return;
+        }
+        locationId = parseInt(locationId) * (-1);
+        $(trObj).find("td").eq(1).text(locationId);
+        $(trObj).hide();
+    }
+    function setCancelLoc(trObj) {
+        var locationId = $(trObj).find("td").eq(1).text();
+        var street = $(trObj).find("td").eq(2).data('originalValue');  // $(trObj).find("td").eq(2).find("input").val();
+        var city = $(trObj).find("td").eq(3).data('originalValue');  //.val();
+        var phone = $(trObj).find("td").eq(4).data('originalValue');
+        var fax = $(trObj).find("td").eq(5).data('originalValue');
+        var inHouse = $(trObj).find("td").eq(6).data('originalValue');
+
+        $(trObj).find("td").eq(2).empty().text(street);
+        $(trObj).find("td").eq(3).empty().text(city);
+        $(trObj).find("td").eq(4).empty().text(phone);
+        $(trObj).find("td").eq(5).empty().text(fax);
+        $(trObj).find("td").eq(6).find("input").prop('checked', inHouse);
+        $(trObj).find("td").eq(6).find("input").prop('disabled', true);
+        var tdObj =$(trObj).find("td").eq(0);
+        $(tdObj).empty();
+        $(tdObj).html('<input type="button" id="btnEditLoc_' + locationId + '" value="Edit" class="btn btn-link" onclick="setEditLoc($(this).closest(\'tr\'));" />' +
+                    '<input type="button" id="btnDelLoc_' + locationId + '" value="Delete" class="btn btn-link" onclick="setDeleteLoc($(this).closest(\'tr\'));setDirty();" />');
+            enableNew();
+    }
+    function setUpdateLoc(trObj) {
+        var locationId = $(trObj).find("td").eq(1).text();
+        var street = $(trObj).find("td").eq(2).find("input").val();
+        var city = $(trObj).find("td").eq(3).find("input").val();
+        var phone = $(trObj).find("td").eq(4).find("input").val();
+        var fax = $(trObj).find("td").eq(5).find("input").val();
+        var inHouse = $(trObj).find("td").eq(6).find("input").prop('checked');
+        
+        if(street.trim().length == 0){ alert("Address is required"); return false;}
+        if(city.trim().length == 0){ alert('City is required');   return false;}
+
+        $(trObj).find("td").eq(2).empty().text(street);
+        $(trObj).find("td").eq(3).empty().text(city);
+        $(trObj).find("td").eq(4).empty().text(phone);
+        $(trObj).find("td").eq(5).empty().text(fax);
+        $(trObj).find("td").eq(6).find("input").prop('checked', inHouse);
+        $(trObj).find("td").eq(6).find("input").prop('disabled', true);
+        var tdObj =$(trObj).find("td").eq(0);
+        $(tdObj).empty();
+        $(tdObj).html('<input type="button" id="btnEditLoc_' + locationId + '" value="Edit" class="btn btn-link" onclick="setEditLoc($(this).closest(\'tr\'));" />' +
+                         '<input type="button" id="btnDelLoc_' + locationId + '" value="Delete" class="btn btn-link" onclick="setDeleteLoc($(this).closest(\'tr\'));setDirty();" />');
+        enableNew();
+    }
+    function setNewLoc(){
+            var locationId = 0;
+            var row = document.getElementById("tblLocationsBody").insertRow();  //          .rows.add().draw().node();
+            for(var i = 0; i<7; i++){
+            var  cell = row.insertCell(i);
+            switch(i){
+                case 0:
+                    $(cell).html('<input type="button" id="btnUpdateLoc_' + locationId + '" value="Update" class="btn btn-link" onclick="setUpdateLoc($(this).closest(\'tr\'));setDirty();" />' +
+                        '<input type="button" id="btnCancelLoc_' + locationId + '" value="Cancel" class="btn btn-link" onclick="$(this).closest(\'tr\').remove(); enableNew();" />');
+                    break;
+                case 1:
+                    $(cell).text(locationId).hide();
+                    break;
+                case 6:
+                        var input = $('<input type="checkbox" class="form-check-input" />');
+                        $(cell).append(input);
+                        break;
+                default:
+                    var input = $('<input type="text" class="form-control" />');
+                    $(cell).append(input);
+                }
+            }
+            $("#btnAddLocation").prop("disabled", true);
+    }
+    function enableNew(){$('#btnAddLocation').prop('disabled', $('input[value="Update"]').length > 0);}
+    function SaveDoctor()
+    {
+        if($("#txtLast").val().trim().length == 0){
+            alert("Last name is required");
+            return false;
+        } 
+        var notClosed = $('input[value="Update"]');
+        if(notClosed.length > 0){
+            alert('Please update or cancel the location edit before saving the doctor.');
+            return false;
+        }
+        var numLocs = document.getElementById("tblLocations").rows.length;
+        if(numLocs == null || numLocs < 2){
+            alert('At least one location is required');
+            return false;
+        }
+        const table = document.getElementById("tblLocations");
+        const rows = table.querySelectorAll("tbody tr");
+        const data = [];
+
+        rows.forEach(row => {
+            const cells = row.querySelectorAll("td");
+            data.push({
+                id: cells[1].textContent.trim(),
+                street: cells[2].textContent.trim(),
+                city: cells[3].textContent.trim(),
+                phone: cells[4].textContent.trim(),
+                fax: cells[5].textContent.trim(),
+                inHouse: $(cells[6]).find("input").prop('checked')
+            });
+        });
+        $("#hdnLocations").val(JSON.stringify(data));
+        var frm = $('#frmAddEditDoc');
+            
+        document.getElementById("msg").innerHTML = "";
+        $.ajax({
+            type: "POST",
+            url: "Doctors?handler=SaveDoctor",
+            type: frm.attr('method'),
+            data: frm.serialize(),
+            success: function (data) {
+            document.getElementById("msg").style = "padding:0px;text-align:center;font-weight:bold;color:green;";
+            document.getElementById("msg").innerHTML = "The Doctor is saved successfully!";
+                $('#myModal').modal('hide');
+                //$('#btnSearch').click();
+                location.reload();
+                return true;
+            },
+            error: function (xhr, status) {
+                document.getElementById("msg").style = "padding:0px;text-align:center;color:red;";
+                document.getElementById("msg").innerHTML = "ERROR: " + status + ", " + xhr.statusText;
+                return false;
+            }
+        });
+    }
+    function formatDate(sDate){
+        if(sDate == null || sDate == '')
+            return '';
+        var date = new Date(sDate);
+        if(date.getFullYear() <1900)
+                return '';
+        var month = (date.getMonth() + 1).toString().padStart(2, '0');
+        var day = date.getDate().toString().padStart(2, '0');
+        var year = date.getFullYear();
+        var hours = date.getHours().toString().padStart(2, '0');
+        var minutes = date.getMinutes().toString().padStart(2, '0');
+        return month + '/' + day + '/' + year + ' ' + hours + ':' + minutes;
+    }
+    function gridHeight() {
+        var iRet = screen.availHeight;
+                iRet = iRet - document.getElementById('appHeader').offsetHeight;
+                iRet = iRet - document.getElementById('appFooter').offsetHeight;
+                iRet = iRet - document.getElementById('hder').offsetHeight;
+        return iRet - 400; // screen.availHeight - document.getElementById('appHeader').offsetHeight - document.getElementById('appFooter').offsetHeight - 100;
+    }
+    function setDirty() {
+        $("input[name='btnSave']").attr("disabled", false);
+        IsDirty = true;
+    }
+</script>
+}

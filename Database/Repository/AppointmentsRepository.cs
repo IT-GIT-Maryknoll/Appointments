@@ -20,47 +20,78 @@ namespace Appointments.Database.Repository
             _context = context;
             _logger = logger;
         }
-        //public async Task<IEnumerable<AppointmentDto>> GetAppointmentsByUserAsync(string userName)
-        //{
-        //    try
-        //    {
-        //        using var connection = _context.CreateConnection();
-        //        var query = "SELECT Id, UserName, Title, Description, StartTime, EndTime FROM Appointments WHERE UserName = @UserName";
-        //        var appointments = await connection.QueryAsync<AppointmentDto>(query, new { UserName = userName });
-        //        return appointments.ToList();
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        _logger.LogError(ex, "Error fetching appointments for user {UserName}", userName);
-        //        throw;
-        //    }
-        //}
-        //public async Task AddAppointmentAsync(AppointmentDto appointment)
-        //{
-        //    try
-        //    {
-        //        using var connection = _context.CreateConnection();
-        //        var query = "INSERT INTO Appointments (UserName, Title, Description, StartTime, EndTime) VALUES (@UserName, @Title, @Description, @StartTime, @EndTime)";
-        //        await connection.ExecuteAsync(query, appointment);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        _logger.LogError(ex, "Error adding appointment for user {UserName}", appointment.UserName);
-        //        throw;
-        //    }
-        //}
-        public async Task DeleteAppointmentAsync(int appointmentId)
+
+        public bool DeleteAppointment(int id, out string sMsg)
         {
+            sMsg = string.Empty;
             try
             {
                 using var connection = _context.CreateConnection();
-                var query = "DELETE FROM Appointments WHERE Id = @Id";
-                await connection.ExecuteAsync(query, new { Id = appointmentId });
+                var query = "DELETE FROM tblAppointments WHERE Id = @Id";
+                connection.Execute(query, new { Id = id });
+                sMsg = $"The Appointment is successfully deleted ";
+                return true;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error deleting appointment with Id {AppointmentId}", appointmentId);
-                return;
+                _logger.LogError(ex, "Error deleting appointment with Id {id}", id);
+                sMsg = "ERROR: " + ex.Message + " " + (ex.InnerException == null ? "" : ex.InnerException.Message);
+                return false;
+            }
+        }
+        public bool SaveAppointment(AppointmentDto appointment, out string sMsg)
+        {
+            sMsg = string.Empty;
+            var query = "";
+            var parameters = new DynamicParameters();
+            parameters.Add("ID", appointment.ID);
+            parameters.Add("ResidentKey", appointment.ResidentKey);
+            parameters.Add("DoctorKey", appointment.DoctorKey);
+            parameters.Add("DriverKey", appointment.DriverKey);
+            parameters.Add("Status", appointment.Status);
+            parameters.Add("PrepID", appointment.PrepID);
+            parameters.Add("Notes", appointment.Notes);
+            parameters.Add("LocationID", appointment.LocationID);
+            parameters.Add("ApptTime", appointment.ApptTime);
+            parameters.Add("Depart", appointment.Depart);
+            parameters.Add("AddDate", appointment.AddDate);
+            parameters.Add("ModDate", appointment.ModDate);
+            parameters.Add("CreatedBy", appointment.CreatedBy);
+            parameters.Add("ModifiedBy", appointment.ModifiedBy);
+            parameters.Add("ApptType", appointment.ApptType);
+            parameters.Add("InHouseVisit", appointment.InHouseVisit);
+            parameters.Add("NursesAideAccompaniment", appointment.NursesAideAccompaniment);
+            parameters.Add("MakeAppointment", appointment.MakeAppointment);
+            parameters.Add("ConfirmedAppointment", appointment.ConfirmedAppointment);
+            parameters.Add("CarNum", appointment.CarNum);
+            parameters.Add("Wait", appointment.Wait);
+
+            try
+            {
+                using var connection = _context.CreateConnection();
+                if (appointment.ID > 0)
+                {
+                    query = @"UPDATE [dbo].[tblAppointments] SET [ApptTime] = @ApptTime, [DoctorKey] = @DoctorKey, [DriverKey] = @DriverKey, [Notes] = @Notes, [Depart] = @Depart, 
+[ResidentKey] = @ResidentKey, [ModifiedBy] = @ModifiedBy, [ModDate] = @ModDate, [Status] = @Status, [PrepID] = @PrepID, [LocationID] = @LocationID, [ApptType] = @ApptType, 
+[InHouseVisit] = @InHouseVisit, [NursesAideAccompaniment] = @NursesAideAccompaniment, [MakeAppointment]=@MakeAppointment, [ConfirmedAppointment]=@ConfirmedAppointment, [CarNum]=@CarNum, [Wait]=@Wait
+                              WHERE ID = @ID";
+                }
+                else
+                {
+                    query = @"INSERT INTO [dbo].[tblAppointments] (ID, [ApptTime], [DoctorKey], [DriverKey], [Notes], [Depart], [ResidentKey], [CreatedBy], [ModifiedBy], [AddDate], [ModDate], 
+[Status], [PrepID], [LocationID], [ApptType], [InHouseVisit], [NursesAideAccompaniment], [MakeAppointment], [ConfirmedAppointment], [CarNum], [Wait])
+                              VALUES ((select max(ID)+1 from [dbo].[tblAppointments]), @ApptTime, @DoctorKey, @DriverKey, @Notes, @Depart, @ResidentKey, @CreatedBy, @ModifiedBy, @AddDate, @ModDate, 
+@Status, @PrepID, @LocationID, @ApptType, @InHouseVisit, @NursesAideAccompaniment, @MakeAppointment, @ConfirmedAppointment, @CarNum, @Wait)";
+                }
+                connection.Execute(query, parameters);
+                sMsg = $"The Appointment is successfully saved ";
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error saving appointment for {ID}", appointment.ID);
+                sMsg = "ERROR: " + ex.Message + " " + (ex.InnerException == null ? "" : ex.InnerException.Message);
+                return false;
             }
         }
         public List<AppointmentTypeDto> LoadAppointmentTypes(out string sMsg)
@@ -86,7 +117,7 @@ namespace Appointments.Database.Repository
             try
             {
                 using var connection = _context.CreateConnection();
-                var query = "SELECT DoctorKey,  DoctorName, Last FROM qryDoctors WHERE DoctorName is not null AND LEN(LTRIM(RTRIM(DoctorName))) > 0 ORDER BY Last;";
+                var query = "SELECT DoctorKey,  DoctorName, Last FROM qryDoctors WHERE IsDeleted <> 1 AND DoctorName is not null AND LEN(LTRIM(RTRIM(DoctorName))) > 0 ORDER BY Last;";
                 var doctors = connection.QueryAsync<DoctorsDto>(query);
                 return doctors.Result.ToList();
             }
@@ -103,7 +134,7 @@ namespace Appointments.Database.Repository
             try
             {
                 using var connection = _context.CreateConnection();
-                var query = "SELECT ResidentKey,  FullName FROM qryAppointmentNameList WHERE FullName is not null AND LEN(LTRIM(RTRIM(FullName))) > 0 ORDER BY FullName;";
+                var query = "SELECT ResidentKey,  FullName FROM qryAppointmentNameListChina WHERE FullName is not null AND LEN(LTRIM(RTRIM(FullName))) > 0 ORDER BY FullName;";
                 var residents = connection.QueryAsync<ResidentsDto>(query);
                 return residents.Result.ToList();
             }
@@ -121,16 +152,17 @@ namespace Appointments.Database.Repository
             {
                 using var connection = _context.CreateConnection();
                 var query = @"SELECT [ID]
-                    ,[ApptTime]
+                    ,CAST([ApptTime] AS DATE) ApptTime
+                    ,[ApptTime] ApptTm
                     ,[FullName]
-                    ,[Room]
+ --                   ,[Room]
                     ,[DoctorKey]
                     ,[DoctorName]
                     ,[Specialty]
                     ,[DriverKey]
                     ,[DriverName]
                     ,[CarNum]
-                    ,[Car Info]
+                    ,[Car_Info]
                     ,[Street]
                     ,[City]
                     ,[Phone]
@@ -138,7 +170,7 @@ namespace Appointments.Database.Repository
                     ,[Notes]
                     ,[Depart]
                     ,[ResidentKey]
-                    ,[makeAppontment]
+                    ,[MakeAppointment]
                     ,[ConfirmedAppointment]
                     ,[Nurse_Name]
                     ,[CreatedBy]
@@ -150,9 +182,9 @@ namespace Appointments.Database.Repository
                     ,[InHouseVisit]
                     ,[NursesAideAccompaniment]
                     ,[ApptType]
-                    FROM [dbo].[qryAppointments]";
+                    FROM [dbo].[qryAppointmentsChina]";
                 if (sFilter is not null && sFilter.Trim().Length > 0) query += " WHERE " + sFilter;
-                var appointments = connection.QueryAsync<AppointmentDto>(query);
+                Task<IEnumerable<AppointmentDto>> appointments = connection.QueryAsync<AppointmentDto>(query);
                 return appointments.Result.ToList();
             }
             catch (Exception ex)
@@ -179,6 +211,23 @@ namespace Appointments.Database.Repository
                 return new List<DriversDto>();
             }
         }
+        public List<CarDto> LoadCars(out string sMsg)
+        {
+            sMsg = string.Empty;
+            try
+            {
+                using var connection = _context.CreateConnection();
+                var query = "SELECT CarNum, Car_Make + ' ' + Car_Model AS CarName FROM tblCars ORDER BY CarName;";
+                var cars = connection.QueryAsync<CarDto>(query);
+                return cars.Result.ToList();
+            }
+            catch (Exception ex)
+            {
+                sMsg = "ERROR: " + ex.Message + " " + (ex.InnerException == null ? "" : ex.InnerException.Message);
+                _logger.LogError(ex, "Error loading cars");
+                return new List<CarDto>();
+            }
+        }
         public List<LocationDto> GetDoctorLocations(int id, out string sMsg)
         {
             sMsg = string.Empty;
@@ -202,10 +251,11 @@ namespace Appointments.Database.Repository
             try
             {
                 using (var connection = _context.CreateConnection())
-                    {
+                {
 
-                    var query = @"SELECT ID, ApptTime,ApptType, DoctorKey, DoctorName, Specialty, LocationID, DriverKey, DriverName,CarNum,Street, City,Phone, --Car Info,
-                                    Fax, Notes, Depart, ResidentKey, makeAppontment, ConfirmedAppointment, Nurse_Name, CreatedBy, ModifiedBy,AddDate,ModDate,Status, PrepID, Car_Model, FullName
+                    var query = @"SELECT ID, ApptTime, ApptType, DoctorKey, DoctorName, Specialty, LocationID, DriverKey, DriverName,CarNum,Street, City,Phone,NursesAideAccompaniment, --Car_Info,
+                                    Fax, Notes, Depart, ResidentKey, MakeAppointment, ConfirmedAppointment, Nurse_Name, CreatedBy, ModifiedBy,AddDate,ModDate,Status, PrepID, Car_Model, FullName, Wait,
+                                    InHouseVisit
                     FROM [dbo].[qryAppointments_UPD] WHERE ID = @Id";
                     var appointment = connection.QuerySingleOrDefault<AppointmentDto>(query, new { Id = id });
                     if (appointment != null)
@@ -213,7 +263,7 @@ namespace Appointments.Database.Repository
                         appointment.Locations = GetDoctorLocations(appointment.DoctorKey, out sMsg);
                     }
                     return appointment;
-                } 
+                }
             }
             catch (Exception ex)
             {
@@ -261,20 +311,6 @@ namespace Appointments.Database.Repository
             }
 
         }
-        public async Task SaveAppointmentAsync(AppointmentDto appointment)
-        {
-            try
-            {
-                using var connection = _context.CreateConnection();
-                var query = @"INSERT INTO [dbo].[Appointments] ([ApptTime], [FullName], [Room], [DoctorKey], [DoctorName], [Specialty], [DriverKey], [DriverName], [CarNum], [CarInfo], [Street], [City], [Phone], [Fax], [Notes], [Depart], [ResidentKey], [MakeAppointment], [ConfirmedAppointment], [NurseName], [CreatedBy], [ModifiedBy], [AddDate], [ModDate], [Status], [PrepID], [InHouseVisit], [NursesAideAccompaniment], [ApptType])
-                              VALUES (@ApptTime, @FullName, @Room, @DoctorKey, @DoctorName, @Specialty, @DriverKey, @DriverName, @CarNum, @CarInfo, @Street, @City, @Phone, @Fax, @Notes, @Depart, @ResidentKey, @MakeAppointment, @ConfirmedAppointment, @NurseName, @CreatedBy, @ModifiedBy, @AddDate, @ModDate, @Status, @PrepID, @InHouseVisit, @NursesAideAccompaniment, @ApptType)";
-                await connection.ExecuteAsync(query, appointment);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error saving appointment");
-            }
-        }
         public List<PrepNamesDto> LoadPreps(out string sMsg)
         {
             sMsg = string.Empty;
@@ -290,6 +326,31 @@ namespace Appointments.Database.Repository
                 sMsg = "ERROR: " + ex.Message + " " + (ex.InnerException == null ? "" : ex.InnerException.Message);
                 _logger.LogError(ex, "Error loading preps");
                 return new List<PrepNamesDto>();
+            }
+        }
+        public bool SaveAudit(AuditDto audit, out string sMsg)
+        {
+            sMsg = string.Empty;
+            try
+            {
+                using var connection = _context.CreateConnection();
+                var query = @"INSERT INTO [dbo].[Appointments_audit] ([datetime],[ip],[user],[table],[action],[description])
+                              VALUES (@Datetime, @Ip, @User, @Table, @Action, @Description)";
+                var parameters = new DynamicParameters();
+                parameters.Add("ip", audit.Ip);
+                parameters.Add("datetime", audit.Datetime);
+                parameters.Add("user", audit.User);
+                parameters.Add("table", audit.Table);
+                parameters.Add("action", audit.Action);
+                parameters.Add("description", audit.Description);
+                connection.Execute(query, parameters);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                sMsg = "ERROR: " + ex.Message + " " + (ex.InnerException == null ? "" : ex.InnerException.Message);
+                _logger.LogError(ex, "Error saving audit for appointment description {Description}", audit.Description);
+                return false;
             }
         }
     }

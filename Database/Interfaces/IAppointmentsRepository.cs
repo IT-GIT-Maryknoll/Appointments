@@ -6,7 +6,7 @@ namespace Appointments.Database.Interfaces
 {
     public interface IAppointmentsRepository
     {
-        Task DeleteAppointmentAsync(int appointmentId);
+        bool DeleteAppointment(int id, out string sMsg);
         List<AppointmentTypeDto> LoadAppointmentTypes(out string sMsg);
         List<DoctorsDto> LoadDoctors(out string sMsg);
         List<ResidentsDto> LoadResidents(out string sMsg);
@@ -16,5 +16,8 @@ namespace Appointments.Database.Interfaces
         AppointmentDto GetAppointmentById(int id, out string sMsg);
         LocationDto GetLocationById(int id, out string sMsg);
         DoctorsDto GetDoctorById(int id, out string sMsg);
+        bool SaveAppointment(AppointmentDto appointment, out string sMsg);
+        bool SaveAudit(AuditDto audit, out string sMsg);
+        List<CarDto> LoadCars(out string sMsg);
     }
 }

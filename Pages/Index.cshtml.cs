@@ -13,6 +13,8 @@ using System.Collections.Generic;
 using System.DirectoryServices;
 using System.DirectoryServices.AccountManagement;
 using System.Linq;
+using System.Net;
+using System.Net.Sockets;
 using System.Reflection.PortableExecutable;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -41,6 +43,7 @@ namespace Appointments.Pages
         public List<ResidentsDto> lstResidents = new List<ResidentsDto>();
         public List<DriversDto> lstDrivers = new List<DriversDto>();
         public List<PrepNamesDto> lstPreps = new List<PrepNamesDto>();
+        public List<CarDto> lstCars = new List<CarDto>();
 
         private string sFilter = "";
 
@@ -53,7 +56,7 @@ namespace Appointments.Pages
             {
                 lstAppointmentTypes = _appointmentsData.LoadAppointmentTypes(out sMsg);
                 if ((TempData["Message"] == null || (TempData["Message"]?.ToString()?.Length ?? 0) == 0) && sMsg != null && sMsg.Trim().Length > 0) TempData["Message"] = sMsg;
-                else TempData["Message"] = sMsg;
+                else TempData["Message"] += sMsg;
                 sMsg = "";
             }
             if (lstDoctors.Count() == 0)
@@ -84,10 +87,13 @@ namespace Appointments.Pages
                 else TempData["Message"] += sMsg;
                 sMsg = "";
             }
-            //lstAppointments = _appointmentsData.LoadAppointments(sFilter, out sMsg);
-            //if ((TempData["Message"] == null || (TempData["Message"]?.ToString()?.Length ?? 0) == 0) && sMsg != null && sMsg.Trim().Length > 0) TempData["Message"] = sMsg;
-            //else TempData["Message"] += sMsg;
-            //sMsg = "";
+            if (lstCars.Count() == 0)
+            {
+                lstCars = _appointmentsData.LoadCars(out sMsg);
+                if ((TempData["Message"] == null || (TempData["Message"]?.ToString()?.Length ?? 0) == 0) && sMsg != null && sMsg.Trim().Length > 0) TempData["Message"] = sMsg;
+                else TempData["Message"] += sMsg;
+                sMsg = "";
+            }
 
             string s = ViewData["filter"] == null ? "" : ViewData["filter"].ToString();
 
@@ -176,7 +182,7 @@ namespace Appointments.Pages
             }
             else if (sTemp != null && sTemp.Trim().Length > 0 && !sTemp.Equals("Please Select"))
             {
-                sFilter += (sFilter.Length > 0 ? sWord : "") + " [ResidentKey] in (SELECT ResidentKey FROM qryAppointmentNameList where Upper(FullName) like Upper('%" + sTemp.Trim().Replace("'", "''") + "%'))";
+                sFilter += (sFilter.Length > 0 ? sWord : "") + " [ResidentKey] in (SELECT ResidentKey FROM qryAppointmentNameListChina where Upper(FullName) like Upper('%" + sTemp.Trim().Replace("'", "''") + "%'))";
                 ViewData.Add("txtResident", System.Web.HttpUtility.HtmlDecode(sTemp));
             }
 
@@ -227,7 +233,7 @@ namespace Appointments.Pages
             sTemp = txtResident;
             if (sTemp != null && sTemp.Trim().Length > 0 && (hdnResident is null || hdnResident.Trim().Length == 0))
             {
-                sFilter += (sFilter.Length > 0 ? sWord : "") + " [ResidentKey] in (SELECT ResidentKey FROM qryAppointmentNameList where Upper(FullName) like Upper('%" + sTemp.Trim().Replace("'", "''") + "%'))";
+                sFilter += (sFilter.Length > 0 ? sWord : "") + " [ResidentKey] in (SELECT ResidentKey FROM qryAppointmentNameListChina where Upper(FullName) like Upper('%" + sTemp.Trim().Replace("'", "''") + "%'))";
                 ViewData.Add("txtResident", System.Web.HttpUtility.HtmlDecode(sTemp));
             }
 
@@ -283,19 +289,19 @@ namespace Appointments.Pages
                 switch (item.ApptType)
                 {
                     case "Follow-up":
-                        color = "#378006";
+                        color = "#c4eda9";  // "#378006";
                         break;
                     case "Consult":
-                        color = "#0078D7";
+                        color = "#afd5f5"; // "#0078D7";
                         break;
                     case "In-house":
-                        color = "#FF8C00";
+                        color = "#ffcd90";  // "#FF8C00";
                         break;
-                    case "Diagnostics":
-                        color = "#9B111E";
+                    case "Diagnostic":
+                        color = "#ffabb3";  // "#9B111E";
                         break;
                     default:
-                        color = "#434343";
+                        color = "#c7c7c7";  // "#434343";
                         break;
                 }
                 if (item.ApptTime == null) item.ApptTime = DateTime.MinValue;
@@ -307,8 +313,7 @@ namespace Appointments.Pages
                     End = "",
                     EventID = item.ID,
                     IsFullDay = false,
-                    Subject = $"<span style='font-size:16px;'><span style=' font-weight:bold; text-decoration: underline;'>{((DateTime)item.ApptTime).ToShortTimeString()} {item.FullName}<br/> - {item.DoctorName}</span><br/><span style='font-style:normal;'>{item.City},<br/> {item.Phone} {item.ApptType}<br/>{item.DriverName} Depart {dpt}</span><br/></span>",
-                    //Start = DateTime.Now.ToString("o"),
+                    Subject = $"<span style='font-size:16px;color:black;'><span style=' font-weight:bold; text-decoration: underline;'>{((DateTime)item.ApptTm).ToShortTimeString()} {item.FullName}<br/> - {item.DoctorName}</span><br/><span style='font-style:normal;'>{item.City},<br/> {item.Phone} {item.ApptType}<br/>{item.DriverName} Depart {dpt}</span><br/></span>",
                     Start = item.ApptTime == null ? "" : String.Format("{0:u}", ((DateTime)item.ApptTime).AddDays(1)),
                     ThemeColor = color
                 };
@@ -343,6 +348,180 @@ namespace Appointments.Pages
             else TempData["Message"] += sMsg;
             sMsg = "";
             return new JsonResult(oRet);
+        }
+        public JsonResult OnGetDeleteAppointment(int id)
+        {
+            string sMsg = ""; string sTempMsg = ""; string sAuditDesc = "";
+
+            AppointmentDto oExisting = _appointmentsData.GetAppointmentById(id, out sTempMsg);
+            if (oExisting != null)
+            {
+                if ((TempData["Message"] == null || (TempData["Message"]?.ToString()?.Length ?? 0) == 0) && sTempMsg != null && sTempMsg.Trim().Length > 0) TempData["Message"] = sTempMsg;
+                else TempData["Message"] += sTempMsg;
+                sTempMsg = "";
+            }
+            if(oExisting == null)
+            {
+                TempData["Message"] += "ERROR: The Appointment with the ID = " + id.ToString() + " is not found.";
+                return new JsonResult(false);
+            }
+            sAuditDesc += "ApptTime [old]: " + oExisting?.ApptTime + "\n";
+            sAuditDesc += "ResidentKey [old]: " + oExisting?.ResidentKey + "\n";
+            sAuditDesc += "DoctorKey [old]: " + oExisting?.DoctorKey + "\n";
+            sAuditDesc += "Status [old]: " + oExisting?.Status + "\n";
+            sAuditDesc += "LocationID [old]: " + oExisting?.LocationID + "\n";
+            sAuditDesc += "DriverKey [old]: " + oExisting?.DriverKey + "\n";
+            sAuditDesc += "PrepID [old]: " + oExisting?.PrepID + "\n";
+            sAuditDesc += "Depart [old]: " + oExisting?.Depart + "\n";
+            sAuditDesc += "ApptType [old]: " + oExisting?.ApptType + "\n";
+            sAuditDesc += "Notes [old]: " + oExisting?.Notes + "\n";
+            sAuditDesc += "CreatedBy [old]: " + oExisting?.CreatedBy + "\n";
+            sAuditDesc += "AddDate [old]: " + oExisting?.AddDate + "\n";
+            sAuditDesc += "ModifiedBy [old]: " + oExisting?.ModifiedBy + "\n";
+            sAuditDesc += "ModDate [old]: " + oExisting?.ModDate + "\n";
+
+
+
+            bool bRet = _appointmentsData.DeleteAppointment(id, out sMsg);
+            if (bRet) SaveAudit(GetUserName(), GetIpValue(), "Appointments", "Delete", sAuditDesc);
+
+            if ((TempData["Message"] == null || (TempData["Message"]?.ToString()?.Length ?? 0) == 0) && sMsg != null && sMsg.Trim().Length > 0) TempData["Message"] = sMsg;
+            else TempData["Message"] += sMsg;
+            sMsg = "";
+            return new JsonResult(bRet);
+        }
+        public StatusCodeResult OnPostSaveAppointment()
+        {
+            string sAuditDesc = ""; AppointmentDto oExisting = null;
+            string sMsg = ""; int iTemp = 0; DateTime dTemp = new DateTime();
+            AppointmentDto appointment = new AppointmentDto();
+            if (int.TryParse(Request.Form["hdnEventID"], out iTemp)) appointment.ID = iTemp;
+            if (appointment.ID > 0)
+            {
+                //get existing appointment to update
+                string sTempMsg = "";
+                oExisting = _appointmentsData.GetAppointmentById(appointment.ID, out sTempMsg);
+                if (oExisting != null)
+                {
+                    appointment = oExisting.Clone();
+                    if ((TempData["Message"] == null || (TempData["Message"]?.ToString()?.Length ?? 0) == 0) && sTempMsg != null && sTempMsg.Trim().Length > 0) TempData["Message"] = sTempMsg;
+                    else TempData["Message"] += sTempMsg;
+                    sTempMsg = "";
+                }
+            }
+            if (DateTime.TryParse(Request.Form["txtMDate"] + " " + Request.Form["txtMTime"], out dTemp)) appointment.ApptTime = dTemp;
+            if (appointment.ApptTime != oExisting?.ApptTime || oExisting == null)
+                sAuditDesc = sAuditDesc + "ApptTime " + (oExisting == null ? "" : "[old]: " + oExisting?.ApptTime) + " [new] " + appointment.ApptTime + "\n";
+
+            if (int.TryParse(Request.Form["hdnMRes"], out iTemp)) appointment.ResidentKey = iTemp;
+            if (appointment.ResidentKey != oExisting?.ResidentKey || oExisting == null)
+                sAuditDesc = sAuditDesc + "ResidentKey " + (oExisting == null ? "" : "[old]: " + oExisting?.ResidentKey) + " [new] " + appointment.ResidentKey + "\n";
+            if (int.TryParse(Request.Form["hdnMDoc"], out iTemp)) appointment.DoctorKey = iTemp;
+            if (appointment.DoctorKey != oExisting?.DoctorKey || oExisting == null)
+                sAuditDesc = sAuditDesc + "DoctorKey " + (oExisting == null ? "" : "[old]: " + oExisting?.DoctorKey) + " [new] " + appointment.DoctorKey + "\n";
+            appointment.Status = Request.Form["cmbMStatus"] ;
+            if (appointment.Status != oExisting?.Status || oExisting == null)
+                sAuditDesc = sAuditDesc + "Status " + (oExisting == null ? "" : "[old]: " + oExisting?.Status) + " [new] " + appointment.Status + "\n";
+            if (int.TryParse(Request.Form["cmbMAddr"], out iTemp))  appointment.LocationID = iTemp;
+            if (appointment.LocationID != oExisting?.LocationID || oExisting == null)
+                sAuditDesc = sAuditDesc + "LocationID " + (oExisting == null ? "" : "[old]: " + oExisting?.LocationID) + " [new] " + appointment.LocationID + "\n";
+            if (int.TryParse(Request.Form["hdnMDriver"], out iTemp)) appointment.DriverKey = (iTemp == 0? null : iTemp);
+            if (appointment.DriverKey != oExisting?.DriverKey || oExisting == null)
+                sAuditDesc = sAuditDesc + "DriverKey " + (oExisting == null ? "" : "[old]: " + oExisting?.DriverKey) + " [new] " + appointment.DriverKey + "\n";
+            if (int.TryParse(Request.Form["cmbMCar"], out iTemp)) appointment.CarNum = (iTemp == 0 ? null : iTemp);
+            if (appointment.CarNum != oExisting?.CarNum || oExisting == null)
+                sAuditDesc = sAuditDesc + "CarNum " + (oExisting == null ? "" : "[old]: " + oExisting?.CarNum) + " [new] " + appointment.CarNum + "\n";
+            if (int.TryParse(Request.Form["cmbMPrep"], out iTemp)) appointment.PrepID = (iTemp == 0 ? null : iTemp);
+            if (appointment.PrepID != oExisting?.PrepID || oExisting == null)
+                sAuditDesc = sAuditDesc + "PrepID " + (oExisting == null ? "" : "[old]: " + oExisting?.PrepID) + " [new] " + appointment.PrepID + "\n";
+            string sTemp = Request.Form["txtPickup"];
+            if (sTemp == null || sTemp.Trim().Length == 0 || !DateTime.TryParse("1899-12-30 " + Request.Form["txtPickup"], out dTemp))
+                appointment.Depart = null;
+            else appointment.Depart = dTemp;
+            if (appointment.Depart != oExisting?.Depart || oExisting == null)
+                sAuditDesc = sAuditDesc + "Depart " + (oExisting == null ? "" : "[old]: " + oExisting?.Depart) + " [new] " + appointment.Depart + "\n";
+
+            appointment.ApptType = Request.Form["cmbMApptType"];
+            if (appointment.ApptType != oExisting?.ApptType || oExisting == null)
+                sAuditDesc = sAuditDesc + "ApptType " + (oExisting == null ? "" : "[old]: " + oExisting?.ApptType) + " [new] " + appointment.ApptType + "\n";
+            appointment.Notes = Request.Form["txtMNotes"];
+            if (appointment.Notes != oExisting?.Notes || oExisting == null)
+                sAuditDesc = sAuditDesc + "Notes " + (oExisting == null ? "" : "[old]: " + oExisting?.Notes) + " [new] " + appointment.Notes + "\n";
+
+            appointment.MakeAppointment = Request.Form["chkMakeAppointment"].Equals("on");
+            if (appointment.MakeAppointment != oExisting?.MakeAppointment || oExisting == null)
+                sAuditDesc = sAuditDesc + "MakeAppointment " + (oExisting == null ? "" : "[old]: " + oExisting?.MakeAppointment) + " [new] " + appointment.MakeAppointment + "\n";
+            appointment.ConfirmedAppointment = Request.Form["chkConfirmedAppointment"].Equals("on");
+            if (appointment.ConfirmedAppointment != oExisting?.ConfirmedAppointment || oExisting == null)
+                sAuditDesc = sAuditDesc + "ConfirmedAppointment " + (oExisting == null ? "" : "[old]: " + oExisting?.ConfirmedAppointment) + " [new] " + appointment.ConfirmedAppointment + "\n";
+            appointment.NursesAideAccompaniment = Request.Form["chkNursesAideAccompaniment"].Equals("on");
+            if (appointment.NursesAideAccompaniment != oExisting?.NursesAideAccompaniment || oExisting == null)
+                sAuditDesc = sAuditDesc + "NursesAideAccompaniment " + (oExisting == null ? "" : "[old]: " + oExisting?.NursesAideAccompaniment) + " [new] " + appointment.NursesAideAccompaniment + "\n";
+            appointment.Wait = Request.Form["chkWait"].Equals("on");
+            if (appointment.Wait != oExisting?.Wait || oExisting == null)
+                sAuditDesc = sAuditDesc + "Wait " + (oExisting == null ? "" : "[old]: " + oExisting?.Wait) + " [new] " + appointment.Wait + "\n";
+            appointment.InHouseVisit = Request.Form["chkInHouseVisit"].Equals("on");
+            if (appointment.InHouseVisit != oExisting?.InHouseVisit || oExisting == null)
+                sAuditDesc = sAuditDesc + "InHouseVisit " + (oExisting == null ? "" : "[old]: " + oExisting?.InHouseVisit) + " [new] " + appointment.InHouseVisit + "\n";
+
+
+            if (appointment.ID == 0)
+            {
+                appointment.CreatedBy = GetUserName();
+                if (appointment.CreatedBy  != oExisting?.CreatedBy || oExisting == null)
+                    sAuditDesc = sAuditDesc + "CreatedBy " + (oExisting == null ? "" : "[old]: " + oExisting?.CreatedBy) + " [new] " + appointment.CreatedBy + "\n";
+                appointment.AddDate = DateTime.Now;
+                if (appointment.AddDate != oExisting?.AddDate || oExisting == null)
+                    sAuditDesc = sAuditDesc + "AddDate " + (oExisting == null ? "" : "[old]: " + oExisting?.AddDate) + " [new] " + appointment.AddDate + "\n";
+            }
+            appointment.ModifiedBy = GetUserName();
+            if (appointment.ModifiedBy != oExisting?.ModifiedBy || oExisting == null)
+                sAuditDesc = sAuditDesc + "ModifiedBy " + (oExisting == null ? "" : "[old]: " + oExisting?.ModifiedBy) + " [new] " + appointment.ModifiedBy + "\n";
+            appointment.ModDate = DateTime.Now;
+            if (appointment.ModDate != oExisting?.ModDate || oExisting == null)
+                sAuditDesc = sAuditDesc + "ModDate " + (oExisting == null ? "" : " [old]: " + oExisting?.ModDate) + " [new] " + appointment.ModDate + "\n";
+
+            bool bRet = _appointmentsData.SaveAppointment(appointment, out sMsg);
+            if (bRet) SaveAudit(GetUserName(), GetIpValue(), "Appointments", appointment.ID == 0 ? "Create" : "Update", sAuditDesc);
+            if ((TempData["Message"] == null || (TempData["Message"]?.ToString()?.Length ?? 0) == 0) && sMsg != null && sMsg.Trim().Length > 0) TempData["Message"] = sMsg;
+            else TempData["Message"] += sMsg;
+            sMsg = "";
+
+            return new OkResult();
+        }
+        public bool SaveAudit(string uID, string ip, string tblName, string action, string description)
+        {
+            try
+            {
+                    AuditDto audit = new AuditDto();
+
+                    audit.Ip = ip;
+                    audit.Table = tblName;
+                    audit.Action = action;
+                    audit.User = uID;
+                    audit.Description = description;
+                    audit.Datetime = DateTime.Now;
+
+                    _appointmentsData.SaveAudit(audit, out string sMsg);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+        }
+
+        private string GetIpValue()
+        {
+            var host = Dns.GetHostEntry(Dns.GetHostName());
+            foreach (var ip in host.AddressList)
+            {
+                if (ip.AddressFamily == AddressFamily.InterNetwork)
+                {
+                    return ip.ToString();
+                }
+            }
+            return "";
         }
     }
 }
