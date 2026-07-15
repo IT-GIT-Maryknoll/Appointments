@@ -1,0 +1,101 @@
+﻿@page
+@model Appointments.Pages.AppointmentDetailsModel
+@{
+    }
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@@event-calendar/build@3.12.0/event-calendar.min.css"> 
+    <style>
+    .custom-badge {
+        display: inline-block;
+        padding: 2px 6px;
+        font-size: 11px;
+        font-weight: bold
+        border-radius: 4px;
+        margin-right: 4px;
+        color: #fff;
+        vertical-align: middle;
+        flex-shrink: 0;
+    }
+
+    .badge-danger {
+        background-color: #ff4d4d;
+    }
+
+    .badge-info {
+        background-color: #17a2b8;
+    }
+
+    .badge-default {
+        background-color: #6c757d;
+    }
+
+    .ec-event-title {
+        display: flex;
+        align-items: center;
+        min-width: 0;
+        overflow: hidden;
+    }
+
+    .ec-event {
+        font-size: 1.50em;
+    }
+    @@media print {
+        * {
+            overflow: visible !important;
+        }
+
+        html, body {
+            height: auto !important;
+        }
+
+        .ec-event-title {
+            display: block !important;
+            white-space: normal !important;
+            overflow: visible !important;
+            text-overflow: unset !important;
+        }
+
+        .ec-event,
+        .appointment-card {
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        .custom-badge {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        .toolbar,
+        .search-panel,
+        .no-print {
+            display: none !important;
+        }
+    }
+
+    @@page {
+        size: landscape;
+        margin: 0.5in;
+    }
+    </style>
+   @*  <body> *@
+@* <main style="height:stretch">
+    <div class="apptdetails" style="height:stretch"> *@
+        <div id="calendar-controls" class="no-print" style="margin-bottom: 10px; display:flex; gap:10px;">
+        <select id="calendar-month"></select>
+        <select id="calendar-year"></select>
+        <button id="go-button">Go</button>
+        </div>
+
+    <div id="calendar"></div>
+  @*   </div>
+    </main>
+    </body> *@
+    
+
+<script src="https://cdn.jsdelivr.net/npm/@@event-calendar/build@@3.12.0/event-calendar.min.js"></script>
+
+@*  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script> *@
+@* <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>  *@
+<script src="~/js/driversappts.js" asp-append-version="true"></script>

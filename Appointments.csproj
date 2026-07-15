@@ -14,5 +14,13 @@
     <PackageReference Include="System.DirectoryServices" Version="10.0.7" />
     <PackageReference Include="System.DirectoryServices.AccountManagement" Version="10.0.7" />
   </ItemGroup>
+<ItemGroup>
+  <!-- Excludes LibMan configuration from the publish output -->
+  <Content Remove="libman.json" />
+  <None Remove="libman.json" />
 
+  <!-- Excludes DotNet Tools configuration from the publish output -->
+  <Content Remove="dotnet-tools.json" />
+  <None Remove="dotnet-tools.json" />
+</ItemGroup>
 </Project>
