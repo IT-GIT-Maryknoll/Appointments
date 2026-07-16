@@ -1,12 +1,9 @@
 using System;
 using System.Collections.Generic;
-using System.Configuration;
 using System.DirectoryServices;
 using System.DirectoryServices.AccountManagement;
-using System.Drawing;
 using System.Globalization;
 using System.Linq;
-using System.Text.Json;
 using System.Threading.Tasks;
 
 using Appointments.Database.Dto;
@@ -98,7 +95,7 @@ namespace Appointments.Pages
         public async Task<JsonResult> OnGetGetAppointments(string start,string end)
             {
             string sMsg = "";
-         
+
             if(!DateTimeOffset.TryParse(start,CultureInfo.InvariantCulture,DateTimeStyles.AssumeUniversal,out var startDt)||
            !DateTimeOffset.TryParse(end,CultureInfo.InvariantCulture,DateTimeStyles.AssumeUniversal,out var endDt))
                 {
@@ -123,7 +120,6 @@ namespace Appointments.Pages
             if(lstAppointments==null||lstAppointments.Count==0)
                 {
                 return new JsonResult(new List<object>());
-
                 //log error
                 }
             else
@@ -140,11 +136,6 @@ namespace Appointments.Pages
                         title = d.FullName,
                         start = departDayTime,
                         end = d.ApptTm,
-                        //start = start.ToString("yyyy-MM-ddTHH:mm:ss"),
-                        //end = end.ToString("yyyy-MM-ddTHH:mm:ss"),
-                        // backgroundColor = bgColor,
-                        //textColor = "#000000",
-
                         extendedProps = new
                             {
                             apptime = d.ApptTm,
@@ -156,111 +147,12 @@ namespace Appointments.Pages
                             flag = inHouse ? false : true,
                             doctorName = d.DoctorName,
                             doctorAddress = d.Street+" "+d.City,
-                            //badgeText="IH",
-                            //        badgeClass="badge-danger",
-                            //location = d.Description,
-                            //description = d.OwnerID,
-                            //starttime = departDayTime.ToString("hh:mm tt",CultureInfo.InvariantCulture),
-                            //endTime = d.ApptTime.Value.ToString("hh:mm tt",CultureInfo.InvariantCulture),
                             }
                         };
                 }).ToList();
 
                 return new JsonResult(apptDetailsList);
                 }
-
-            //foreach(var item in lstAppointments)
-            //    {
-            //    var dpt = "";
-            //    var color = "";
-            //    switch(item.ApptType)
-            //        {
-            //        case "Follow-up":
-            //            color="#c4eda9";  // "#378006";
-            //            break;
-
-            //        case "Consult":
-            //            color="#afd5f5"; // "#0078D7";
-            //            break;
-
-            //        case "In-house":
-            //            color="#ffcd90";  // "#FF8C00";
-            //            break;
-
-            //        case "Diagnostic":
-            //            color="#ffabb3";  // "#9B111E";
-            //            break;
-
-            //        default:
-            //            color="#c7c7c7";  // "#434343";
-            //            break;
-            //        }
-            //    if(item.ApptTime==null)
-            //        item.ApptTime=DateTime.MinValue;
-            //    if(item.Depart.HasValue)
-            //        dpt=((DateTime)item.Depart).ToShortTimeString();
-            //    var displayEvent = new
-            //        {
-            //        //Description = $"<span style='font-size:16px;'>{((DateTime)item.ApptTime).ToShortTimeString()} {item.FullName}<br/> - {item.DoctorName}<br/>{item.City},<br/> {item.Phone} {item.ApptType}<br/>{item.DriverName} Depart {dpt}<br/></span>",
-            //        //Description=$"abc",
-            //        End = "",
-            //        EventID = item.ID,
-            //        IsFullDay = false,
-            //        Subject = $"<span style='font-size:16px;color:black;'><span style=' font-weight:bold; text-decoration: underline;'>{((DateTime)item.ApptTm).ToShortTimeString()} {item.FullName}<br/> - {item.DoctorName}</span><br/><span style='font-style:normal;'>{item.City},<br/> {item.Phone} {item.ApptType}<br/>{item.DriverName} Depart {dpt}</span><br/></span>",
-            //        Start = item.ApptTime==null ? "" : String.Format("{0:u}",((DateTime)item.ApptTime).AddDays(1)),
-            //        ThemeColor = color
-            //        };
-            //    list.Add(displayEvent);
-            //    }
-            }
-
-        private void GetFilterIn()
-            {
-            sFilter="";
-            string sTemp = "";
-            ViewData.Clear();
-            string sWord = " and ";
-            sTemp=lblDate;
-            if(sTemp==null||sTemp.Trim().Length==0)
-                sTemp=DateTime.Now.Year+"-"+DateTime.Now.Month.ToString().PadLeft(2,'0')+"-"+DateTime.Now.Day.ToString().PadLeft(2,'0');
-            else
-                sTemp=sTemp.Trim()+"-01";
-            sFilter+=(sFilter.Length>0 ? sWord : "")+" MONTH([ApptTime]) = MONTH('"+sTemp+"') AND YEAR([ApptTime]) = YEAR('"+sTemp+"')";
-            ViewData.Add("lblDate",System.Web.HttpUtility.HtmlDecode(sTemp));
-
-            sTemp=hdnResident;
-            if(sTemp!=null&&sTemp.Trim().Length>0)
-                {
-                sFilter+=(sFilter.Length>0 ? sWord : "")+" [ResidentKey] = "+sTemp;
-                ViewData.Add("hdnResident",System.Web.HttpUtility.HtmlDecode(sTemp));
-                }
-            sTemp=txtResident;
-            if(sTemp!=null&&sTemp.Trim().Length>0&&(hdnResident is null||hdnResident.Trim().Length==0))
-                {
-                sFilter+=(sFilter.Length>0 ? sWord : "")+" [ResidentKey] in (SELECT ResidentKey FROM qryAppointmentNameListChina where Upper(FullName) like Upper('%"+sTemp.Trim().Replace("'","''")+"%'))";
-                ViewData.Add("txtResident",System.Web.HttpUtility.HtmlDecode(sTemp));
-                }
-
-            sTemp=hdnDoctor;
-            if(sTemp!=null&&sTemp.Trim().Length>0)
-                {
-                sFilter+=(sFilter.Length>0 ? sWord : "")+" [DoctorKey] = "+sTemp;
-                ViewData.Add("hdnDoctor",System.Web.HttpUtility.HtmlDecode(sTemp));
-                }
-            sTemp=txtDoctor;
-            if(sTemp!=null&&sTemp.Trim().Length>0&&(hdnDoctor is null||hdnDoctor.Trim().Length==0))
-                {
-                sFilter+=(sFilter.Length>0 ? sWord : "")+" [DoctorKey] in (SELECT DoctorKey FROM qryDoctors where Upper(DoctorName) like Upper('%"+sTemp.Trim().Replace("'","''")+"%'))";
-                ViewData.Add("txtDoctor",System.Web.HttpUtility.HtmlDecode(sTemp));
-                }
-            sTemp=cmbApptType;
-            if(sTemp!=null&&sTemp.Trim().Length>0)
-                {
-                sFilter+=(sFilter.Length>0 ? sWord : "")+" ApptType = '"+sTemp.Trim().Replace("'","''")+"'";
-                ViewData.Add("cmbApptType",System.Web.HttpUtility.HtmlDecode(sTemp));
-                }
-            ViewData["filter"]=JsonSerializer.Serialize(ViewData);
-            HttpContext.Session.SetString("sFilter",sFilter);
             }
         }
     }
