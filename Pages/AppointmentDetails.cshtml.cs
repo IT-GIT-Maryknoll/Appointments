@@ -33,6 +33,7 @@ namespace Appointments.Pages
         public string txtDoctor = "";
         public string cmbApptType = "";
         public string bFilter = "false";
+        public bool ShowInhouse { get; set; }
 
         public void OnGet()
             {
@@ -148,10 +149,11 @@ namespace Appointments.Pages
                             {
                             apptime = d.ApptTm,
                             nursenotes = d.Notes,
-                            wait=d.Wait,
+                            wait = d.Wait,
                             badgeText = inHouse ? "I" : "N",
                             badgeClass = inHouse ? "badge-danger" : "",
                             inhouse = inHouse,
+                            flag = inHouse ? false : true,
                             doctorName = d.DoctorName,
                             doctorAddress = d.Street+" "+d.City,
                             //badgeText="IH",
