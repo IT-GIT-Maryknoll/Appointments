@@ -1,0 +1,71 @@
+﻿.custom-badge {
+    display: inline-block;
+    padding: 2px 6px;
+    font-size: 11px;
+    font-weight: bold border-radius: 4px;
+    margin-right: 4px;
+    color: #fff;
+    vertical-align: middle;
+    flex-shrink: 0;
+}
+
+.badge-danger {
+    background-color: #ff4d4d;
+}
+
+.badge-info {
+    background-color: #17a2b8;
+}
+
+.badge-default {
+    background-color: #6c757d;
+}
+
+.ec-event-title {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.ec-event {
+    font-size: 1.50em;
+}
+
+@media print {
+
+    .day-header {
+        background: #f2f2f2;
+        padding: 8px;
+        font-size: 16pt;
+        font-weight: bold;
+        margin-top: 15px;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 15px;
+    }
+
+    th {
+        background: #e6e6e6;
+        font-weight: bold;
+    }
+
+    th, td {
+        border: 1px solid #ccc;
+        padding: 6px;
+        text-align: left;
+        vertical-align: top;
+    }
+
+    tr {
+        page-break-inside: avoid;
+    }
+
+    @page {
+        size: letter;
+        margin: 0.5in;
+    }
+}

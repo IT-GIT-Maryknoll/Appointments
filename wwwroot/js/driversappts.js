@@ -52,20 +52,21 @@ document.addEventListener('DOMContentLoaded', function () {
     checkbox.addEventListener('change', () => {
         newFunction();
     });
-
-    // // CRITICAL FIX: Re-render the calendar when the Inhouse checkbox shifts
-    // checkbox1.addEventListener('change', () => {
-    //     newFunction();
-    // });
 });
 
 function newFunction() {
+    let savedView = window.innerWidth < 600 ? 'listWeek' : 'dayGridMonth'; // Your fallback default
+    let savedDate = new Date();
     if (ec) {
+        savedView = ec.getOption('view');
+        savedDate = ec.getOption('date');
+        console.log(ec.view);
         ec.destroy();
     }
 
     ec = new EventCalendar(document.getElementById('calendar'), {
-        view: window.innerWidth < 600 ? 'listWeek' : 'listWeek',
+        view: savedView,
+        date: savedDate,
         height: '100%',
         firstday: 1,
         eventStartEditable: false,
@@ -84,7 +85,8 @@ function newFunction() {
             print: {
                 text: 'Print',
                 click: function () {
-                    window.print();
+                    // window.print();
+                    printAppointmentTable();
                 }
             }
         },
@@ -158,7 +160,6 @@ function newFunction() {
 
             // LIST & DAY VIEWS: Handle logic based on checkboxes dynamically
             if (view === "listDay" || view === "listWeek") {
-
                 // CRITICAL FIX: If event is inhouse, but "Show Inhouse" checkbox is false, hide the event structure
                 if (event.extendedProps.inhouse === true) {
                     if (checkbox1.checked === true) {
@@ -190,39 +191,141 @@ function newFunction() {
 function newFunction_2(dpDepart, dpAppt, title, event) {
     return {
         html: `
-               <span class="ec-line">
-	<strong>⏰ Depart: ${dpDepart} Appt: ${dpAppt}  </strong>
-	<span class="sep">|</span>
-	<strong>📝Resident: ${title} </strong>
-	<span class="sep">|</span>
-	<strong>📍 Doctor: ${event.extendedProps.doctorName}</strong>
-	<span class="sep">|</span>
+<span class="ec-line">
+	<strong>⏰ Depart:</strong> ${dpDepart} <strong>Appt:</strong> ${dpAppt}
+	<strong>📝Resident:</strong> ${title}
+	<strong>📍Doctor:</strong> ${event.extendedProps.doctorName}
+	<strong>💬Wait:</strong> ${event.extendedProps.wait ? 'Yes' : 'No'}
 </span>
 <span class="ec-line">
-	<strong> 💬 Wait: ${event.extendedProps.wait ? 'Yes' : 'No'}</strong>
-	<span class="sep">|</span>
-	<strong> 📍 Address: ${event.extendedProps.doctorAddress}</strong>
-	<span class="sep"></span>
-</span>             `
+	<strong>📍Address:</strong> ${event.extendedProps.doctorAddress}
+</span>           `
     };
 }
 
 function newFunction_1(start, title, event) {
     return {
         html: `
-               <span class="ec-line">
-	<strong>⏰ Appt ${start}</strong>
-	<span class="sep">|</span>
-	<strong>📝Resident ${title} </strong>
-	<span class="sep">|</span>
-	<strong>📍 Doctor ${event.extendedProps.doctorName}</strong>
-	<span class="sep">|</span>
+            <span class="ec-line">
+	<strong>⏰Appt:</strong> ${start}
+	<strong>📝Resident:</strong> ${title}
+	<strong>📍Doctor:</strong> ${event.extendedProps.doctorName}
+	<strong>💬Wait:</strong> ${event.extendedProps.wait ? 'Yes' : 'No'}
 </span>
 <span class="ec-line">
-	<strong> 💬 Wait: ${event.extendedProps.wait ? 'Yes' : 'No'}</strong>
-	<span class="sep">|</span>
-	<strong> 📍 Address ${event.extendedProps.doctorAddress}</strong>
-	<span class="sep">|</span>
-</span>             `
+	<strong>📍Address:</strong>${event.extendedProps.doctorAddress}
+</span>          `
     };
+}
+
+function printAppointmentTable() {
+    const titleText = document.querySelector('.ec-title')?.innerText || 'Appointment Schedule';
+    const dayElements = document.querySelectorAll('.ec-day');
+    const appointmentsByDay = [];
+
+    dayElements.forEach(dayEl => {
+        const dayHead = dayEl.querySelector('.ec-day-head');
+        if (!dayHead) return;
+
+        const dateText = dayHead.innerText.replace(/\s+/g, ' ').trim();
+        const events = dayEl.querySelectorAll('.ec-event');
+
+        events.forEach(eventEl => {
+            const lines = eventEl.querySelectorAll('.ec-line');
+            if (lines.length === 0) return;
+
+            let mainLineText = lines[0].innerText || lines[0].textContent;
+            let addressText = lines[1] ? (lines[1].innerText || lines[1].textContent) : '';
+
+            // Clean prefixes and icons out of text fields
+            mainLineText = mainLineText.replace(/[⏰📝📍💬]/g, '');
+            addressText = addressText.replace(/[📍]/g, '').replace(/Address:\s*/i, '').trim();
+
+            // Extract distinct parameter tokens accurately
+            const departMatch = mainLineText.match(/Depart:\s*([^\n\r]+?)(?=\s*Appt:|$)/i);
+            const apptMatch = mainLineText.match(/Appt:\s*([^\n\r]+?)(?=\s*Resident:|$)/i);
+            const residentMatch = mainLineText.match(/Resident:\s*([^\n\r]+?)(?=\s*Doctor:|$)/i);
+            const doctorMatch = mainLineText.match(/Doctor:\s*([^\n\r]+?)(?=\s*Wait:|$)/i);
+            const waitMatch = mainLineText.match(/Wait:\s*([^\n\r]+)$/i);
+
+            appointmentsByDay.push({
+                date: dateText,
+                depart: departMatch ? departMatch[1].trim() : '—',
+                appt: apptMatch ? apptMatch[1].trim() : (mainLineText.match(/Appt:\s*([^\n\r]+?)(?=\s*Resident:|$)/i) ? '' : mainLineText.split('Resident:')[0].replace(/Appt:\s*/i, '').trim()),
+                resident: residentMatch ? residentMatch[1].trim() : '',
+                doctor: doctorMatch ? doctorMatch[1].trim() : '—',
+                wait: waitMatch ? waitMatch[1].trim() : 'No',
+                address: addressText
+            });
+        });
+    });
+
+    if (appointmentsByDay.length === 0) {
+        alert("No appointments found to print.");
+        return;
+    }
+
+    let printContent = `
+    <html>
+    <head>
+        <title>${titleText}</title>
+        <style>
+            body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; margin: 30px; color: #333; }
+            h2 { text-align: center; margin-bottom: 5px; color: #111; }
+            h3 { text-align: center; margin-top: 0; font-weight: normal; color: #666; font-size: 16px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 25px; }
+            th, td { border: 1px solid #ddd; padding: 10px; text-align: left; font-size: 13px; vertical-align: top; }
+            th { background-color: #f5f5f5; font-weight: bold; color: #222; }
+            tr:nth-child(even) { background-color: #fafafa; }
+            .date-cell { font-weight: 600; color: #000; white-space: nowrap; }
+        </style>
+    </head>
+    <body>
+        <h2>Appointment Schedule Table</h2>
+        <h3>${titleText}</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Day / Date</th>
+                    <th>Depart Time</th>
+                    <th>Appt Time</th>
+                    <th>Resident</th>
+                    <th>Doctor</th>
+                    <th>Wait</th>
+                    <th>Address</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+
+    appointmentsByDay.forEach(appt => {
+        printContent += `
+            <tr>
+                <td class="date-cell">${appt.date}</td>
+                <td>${appt.depart}</td>
+                <td>${appt.appt}</td>
+                <td>${appt.resident}</td>
+                <td>${appt.doctor}</td>
+                <td>${appt.wait}</td>
+                <td>${appt.address}</td>
+            </tr>
+        `;
+    });
+
+    printContent += `
+            </tbody>
+        </table>
+    </body>
+    </html>
+    `;
+
+    const printWindow = window.open('', '_blank', 'height=700,width=900');
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+
+    printWindow.focus();
+    setTimeout(() => {
+        printWindow.print();
+        printWindow.close();
+    }, 300);
 }
