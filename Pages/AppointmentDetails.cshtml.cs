@@ -140,13 +140,14 @@ namespace Appointments.Pages
                             {
                             apptime = d.ApptTm,
                             nursenotes = d.Notes,
-                            wait = d.Wait,
+                            wait = d.Wait==true?"Yes":"No",
                             badgeText = inHouse ? "I" : "N",
                             badgeClass = inHouse ? "badge-danger" : "",
                             inhouse = inHouse,
                             flag = inHouse ? false : true,
                             doctorName = d.DoctorName,
                             doctorAddress = d.Street+" "+d.City,
+                            driverName=d.DriverName
                             }
                         };
                 }).ToList();

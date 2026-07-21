@@ -1,12 +1,11 @@
-﻿// Please see documentation at https://docs.microsoft.com/aspnet/core/client-side/bundling-and-minification
-// for details on configuring this project to bundle and minify static web assets.
-
-const modal = document.getElementById('eventModal');
+﻿const modal = document.getElementById('eventModal');
 const monthSelect = document.getElementById('calendar-month');
 const yearSelect = document.getElementById('calendar-year');
 let ec;
 const checkbox = document.querySelector('.form-check-input');
 const checkbox1 = document.getElementById("ShowInhouse");
+let sortedList = null;
+let filteredData = null;
 
 document.addEventListener('DOMContentLoaded', function () {
     // Handle window resize to adjust calendar view
@@ -25,7 +24,6 @@ document.addEventListener('DOMContentLoaded', function () {
         "January", "February", "March", "April", "May", "June",
         "July", "August", "September", "October", "November", "December"
     ];
-
     monthNames.forEach((m, i) => {
         const opt = document.createElement("option");
         opt.value = i;   // 0–11 for JS date
@@ -52,18 +50,23 @@ document.addEventListener('DOMContentLoaded', function () {
     checkbox.addEventListener('change', () => {
         newFunction();
     });
+
+    // Trigger calendar refresh when "Show Inhouse" checkbox status changes
+    checkbox1.addEventListener('change', () => {
+        if (ec) {
+            ec.refetchEvents();
+        }
+    });
 });
 
 function newFunction() {
-    let savedView = window.innerWidth < 600 ? 'listWeek' : 'dayGridMonth'; // Your fallback default
+    let savedView = window.innerWidth < 600 ? 'listWeek' : 'dayGridMonth';
     let savedDate = new Date();
     if (ec) {
         savedView = ec.getOption('view');
         savedDate = ec.getOption('date');
-        console.log(ec.view);
         ec.destroy();
     }
-
     ec = new EventCalendar(document.getElementById('calendar'), {
         view: savedView,
         date: savedDate,
@@ -85,7 +88,6 @@ function newFunction() {
             print: {
                 text: 'Print',
                 click: function () {
-                    // window.print();
                     printAppointmentTable();
                 }
             }
@@ -98,27 +100,8 @@ function newFunction() {
                         console.log("Calendar is still warming up...");
                         return;
                     }
-                    const url = `/AppointmentDetails?handler=GetAppointments&start=${fetchInfo.startStr}&end=${fetchInfo.endStr}`;
-                    fetch(url)
-                        .then(res => res.json())
-                        .then(data => {
-                            if (Array.isArray(data)) {
-                                // Filter out events where inhouse is true IF checkbox1 is unchecked
-                                const filteredData = data.filter(event => {
-                                    if (event.extendedProps && event.extendedProps.inhouse === true) {
-                                        return checkbox1.checked; // keeps if checked, removes if unchecked
-                                    }
-                                    // Alternative check if "inhouse" is at the root level of your JSON object:
-                                    if (event.inhouse === true) {
-                                        return checkbox1.checked;
-                                    }
-                                    return true; // Keep all other events
-                                });
-                                successCallback(filteredData);
-                            } else {
-                                successCallback([]);
-                            }
-                        });
+                    const url = `/AppointmentDetails?handler=GetAppointments&start=${fetchInfo.startStr.split('T')[0]}&end=${fetchInfo.endStr.split('T')[0]}`;
+                    getAppDateDetails(fetchInfo, successCallback, url);
                 },
             }
         ],
@@ -143,7 +126,6 @@ function newFunction() {
 
             let badgeClass = event.extendedProps ? event.extendedProps.badgeClass : 'badge-default';
 
-            // MONTH VIEW
             if (view === "dayGridMonth") {
                 if (event.extendedProps.badgeText === "I") {
                     return {
@@ -158,19 +140,15 @@ function newFunction() {
                 };
             }
 
-            // LIST & DAY VIEWS: Handle logic based on checkboxes dynamically
             if (view === "listDay" || view === "listWeek") {
-                // CRITICAL FIX: If event is inhouse, but "Show Inhouse" checkbox is false, hide the event structure
                 if (event.extendedProps.inhouse === true) {
                     if (checkbox1.checked === true) {
                         return newFunction_1(start, title, event);
                     } else {
-                        // Returning an empty object or hidden div safely hides value mapping in EventCalendar UI elements
                         return { html: `<div style="display:none;"></div>` };
                     }
                 }
 
-                // Fallback for regular non-inhouse appointments
                 if (event.extendedProps.inhouse === false) {
                     return newFunction_2(dpDepart, dpAppt, title, event);
                 }
@@ -178,154 +156,328 @@ function newFunction() {
         },
         eventClick: function (info) {
             const e = info.event;
+           
+            const modal = document.getElementById('eventModal');
+
             document.getElementById('m-title').innerText = e.title;
             document.getElementById('m-date').innerText = e.start.toDateString();
-            document.getElementById('m-location').innerText = (e.extendedProps.location || 'Unknown Location');
-            document.getElementById('m-start').innerText = (e.extendedProps.starttime || '');
-            document.getElementById('m-end').innerText = (e.extendedProps.endTime || '');
-            document.getElementById('m-description').innerText = (e.extendedProps.description || '');
+            document.getElementById('m-location').innerText = /* "📍 " */  (escapeHtml(e.extendedProps.driverName) || ' ');
+            document.getElementById('m-start').innerText = (escapeHtml(formatTime(e.start ))|| ' ');
+            document.getElementById('m-end').innerText = (escapeHtml(formatTime(e.end ))|| ' ');
+            document.getElementById('m-description').innerText = (escapeHtml(e.extendedProps.doctorAddress)) || ' ';
+
+            modal.style.display = 'flex';
+         
+
         }
     });
 }
+function closeModal() {
+    modal.style.display = 'none';
+}
 
-function newFunction_2(dpDepart, dpAppt, title, event) {
-    return {
-        html: `
-<span class="ec-line">
-	<strong>⏰ Depart:</strong> ${dpDepart} <strong>Appt:</strong> ${dpAppt}
-	<strong>📝Resident:</strong> ${title}
-	<strong>📍Doctor:</strong> ${event.extendedProps.doctorName}
-	<strong>💬Wait:</strong> ${event.extendedProps.wait ? 'Yes' : 'No'}
-</span>
-<span class="ec-line">
-	<strong>📍Address:</strong> ${event.extendedProps.doctorAddress}
-</span>           `
-    };
+function getAppDateDetails(fetchInfo, successCallback, url) {
+    fetch(url)
+        .then(res => res.json())
+        .then(data => {
+            if (Array.isArray(data)) {
+                filteredData = data.filter(event => {
+                    const isInHouse = event.extendedProps?.inhouse === true || event.inhouse === true;
+                    if (isInHouse) {
+                        return checkbox1.checked;
+                    }
+                    return true;
+                });
+                successCallback(filteredData);
+            } else {
+                successCallback([]);
+            }
+        });
 }
 
 function newFunction_1(start, title, event) {
     return {
         html: `
-            <span class="ec-line">
-	<strong>⏰Appt:</strong> ${start}
-	<strong>📝Resident:</strong> ${title}
-	<strong>📍Doctor:</strong> ${event.extendedProps.doctorName}
-	<strong>💬Wait:</strong> ${event.extendedProps.wait ? 'Yes' : 'No'}
-</span>
-<span class="ec-line">
-	<strong>📍Address:</strong>${event.extendedProps.doctorAddress}
-</span>          `
+        <span class="ec-line">
+            <strong>⏰Appt:</strong> ${start}
+            <strong>📝Resident:</strong> ${title}
+            <strong>📍Doctor:</strong> ${event.extendedProps.doctorName || ''}
+            <strong>💬Wait:</strong> ${event.extendedProps.wait || ''}
+            <strong>📍Driver:</strong> ${event.extendedProps.driverName || ''}
+        </span>
+        <span class="ec-line">
+            <strong>📍Address:</strong> ${event.extendedProps.doctorAddress || ''}
+        </span>`
     };
 }
 
-function printAppointmentTable() {
-    const titleText = document.querySelector('.ec-title')?.innerText || 'Appointment Schedule';
-    const dayElements = document.querySelectorAll('.ec-day');
-    const appointmentsByDay = [];
+function newFunction_2(dpDepart, dpAppt, title, event) {
+    return {
+        html: `
+        <span class="ec-line">
+            <strong>⏰ Depart:</strong> ${dpDepart} <strong>Appt:</strong> ${dpAppt}
+            <strong>📝Resident:</strong> ${title}
+            <strong>📍Doctor:</strong> ${event.extendedProps.doctorName || ''}
+            <strong>💬Wait:</strong> ${event.extendedProps.wait || ''}
+            <strong>📍Driver:</strong> ${event.extendedProps.driverName || ''}
+        </span>
+        <span class="ec-line">
+            <strong>📍Address:</strong> ${event.extendedProps.doctorAddress || ''}
+        </span>`
+    };
+}
 
-    dayElements.forEach(dayEl => {
-        const dayHead = dayEl.querySelector('.ec-day-head');
-        if (!dayHead) return;
+function getAppDateDetailsForPrint() {
+    const currentView = ec.getView();
+    const formatDateLocal = (dateObj) => {
+        const d = new Date(dateObj);
+        const month = '' + (d.getMonth() + 1);
+        const day = '' + d.getDate();
+        const year = d.getFullYear();
+        return [year, month.padStart(2, '0'), day.padStart(2, '0')].join('-');
+    };
 
-        const dateText = dayHead.innerText.replace(/\s+/g, ' ').trim();
-        const events = dayEl.querySelectorAll('.ec-event');
+    const startStr = formatDateLocal(currentView.activeStart);
+    const endStr = formatDateLocal(currentView.activeEnd);
 
-        events.forEach(eventEl => {
-            const lines = eventEl.querySelectorAll('.ec-line');
-            if (lines.length === 0) return;
+    const url = `/AppointmentDetails?handler=GetAppointments&start=${startStr}&end=${endStr}`;
+    return fetch(url)
+        .then(res => res.json())
+        .then(data => {
+            if (!Array.isArray(data)) return [];
 
-            let mainLineText = lines[0].innerText || lines[0].textContent;
-            let addressText = lines[1] ? (lines[1].innerText || lines[1].textContent) : '';
-
-            // Clean prefixes and icons out of text fields
-            mainLineText = mainLineText.replace(/[⏰📝📍💬]/g, '');
-            addressText = addressText.replace(/[📍]/g, '').replace(/Address:\s*/i, '').trim();
-
-            // Extract distinct parameter tokens accurately
-            const departMatch = mainLineText.match(/Depart:\s*([^\n\r]+?)(?=\s*Appt:|$)/i);
-            const apptMatch = mainLineText.match(/Appt:\s*([^\n\r]+?)(?=\s*Resident:|$)/i);
-            const residentMatch = mainLineText.match(/Resident:\s*([^\n\r]+?)(?=\s*Doctor:|$)/i);
-            const doctorMatch = mainLineText.match(/Doctor:\s*([^\n\r]+?)(?=\s*Wait:|$)/i);
-            const waitMatch = mainLineText.match(/Wait:\s*([^\n\r]+)$/i);
-
-            appointmentsByDay.push({
-                date: dateText,
-                depart: departMatch ? departMatch[1].trim() : '—',
-                appt: apptMatch ? apptMatch[1].trim() : (mainLineText.match(/Appt:\s*([^\n\r]+?)(?=\s*Resident:|$)/i) ? '' : mainLineText.split('Resident:')[0].replace(/Appt:\s*/i, '').trim()),
-                resident: residentMatch ? residentMatch[1].trim() : '',
-                doctor: doctorMatch ? doctorMatch[1].trim() : '—',
-                wait: waitMatch ? waitMatch[1].trim() : 'No',
-                address: addressText
+            return data.filter(event => {
+                const isInHouse = event.extendedProps?.inhouse || event.inhouse;
+                return !isInHouse || checkbox1.checked;
             });
-        });
-    });
+        })
+        .catch(() => []);
+}
 
-    if (appointmentsByDay.length === 0) {
-        alert("No appointments found to print.");
+async function printAppointmentTable() {
+    const titleText =
+        document.querySelector(".ec-title")?.textContent?.trim() ||
+        "Appointment Schedule";
+
+    const printWindow = window.open("", "_blank");
+
+    if (!printWindow) {
+        alert("Popup blocked. Please allow popups to print.");
         return;
     }
 
-    let printContent = `
-    <html>
-    <head>
-        <title>${titleText}</title>
-        <style>
-            body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; margin: 30px; color: #333; }
-            h2 { text-align: center; margin-bottom: 5px; color: #111; }
-            h3 { text-align: center; margin-top: 0; font-weight: normal; color: #666; font-size: 16px; }
-            table { width: 100%; border-collapse: collapse; margin-top: 25px; }
-            th, td { border: 1px solid #ddd; padding: 10px; text-align: left; font-size: 13px; vertical-align: top; }
-            th { background-color: #f5f5f5; font-weight: bold; color: #222; }
-            tr:nth-child(even) { background-color: #fafafa; }
-            .date-cell { font-weight: 600; color: #000; white-space: nowrap; }
-        </style>
-    </head>
-    <body>
-        <h2>Appointment Schedule Table</h2>
-        <h3>${titleText}</h3>
-        <table>
-            <thead>
+    try {
+        let events = await getAppDateDetailsForPrint();
+        events = sortAppointmentsByStart(events);
+
+        const rows = events.map(event => {
+            const departDate = new Date(event.start);
+            const apptDate = event.extendedProps?.apptime
+                ? new Date(event.extendedProps.apptime)
+                : null;
+
+            return `
                 <tr>
-                    <th>Day / Date</th>
-                    <th>Depart Time</th>
-                    <th>Appt Time</th>
-                    <th>Resident</th>
-                    <th>Doctor</th>
-                    <th>Wait</th>
-                    <th>Address</th>
+                    <td class="date-cell">${escapeHtml(formatDate(departDate))}</td>
+                    <td>${escapeHtml(formatTime(departDate))}</td>
+                    <td>${escapeHtml(formatTime(apptDate))}</td>
+                    <td>${escapeHtml(event.title)}</td>
+                    <td>${escapeHtml(event.extendedProps?.doctorName)}</td>
+                    <td>${escapeHtml(event.extendedProps?.driverName)}</td>
+                    <td>${escapeHtml(event.extendedProps?.wait)}</td>
+                    <td>${escapeHtml(event.extendedProps?.doctorAddress)}</td>
                 </tr>
-            </thead>
-            <tbody>
-    `;
+            `;
+        }).join("");
 
-    appointmentsByDay.forEach(appt => {
-        printContent += `
-            <tr>
-                <td class="date-cell">${appt.date}</td>
-                <td>${appt.depart}</td>
-                <td>${appt.appt}</td>
-                <td>${appt.resident}</td>
-                <td>${appt.doctor}</td>
-                <td>${appt.wait}</td>
-                <td>${appt.address}</td>
-            </tr>
-        `;
-    });
+        const html = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>${escapeHtml(titleText)}</title>
+            <style>
+                body {
+                    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+                    margin: 20px;
+                    color: #333;
+                }
 
-    printContent += `
-            </tbody>
-        </table>
-    </body>
-    </html>
-    `;
+                h2 {
+                    text-align: center;
+                    margin-bottom: 5px;
+                }
 
-    const printWindow = window.open('', '_blank', 'height=700,width=900');
-    printWindow.document.write(printContent);
-    printWindow.document.close();
+                h3 {
+                    text-align: center;
+                    font-weight: normal;
+                    margin-top: 0;
+                    color: #666;
+                }
 
-    printWindow.focus();
-    setTimeout(() => {
-        printWindow.print();
+                table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin-top: 20px;
+                }
+
+                th, td {
+                    border: 1px solid #ddd;
+                    padding: 8px;
+                    text-align: left;
+                    vertical-align: top;
+                    font-size: 12px;
+                }
+
+                th {
+                    background: #f5f5f5;
+                }
+
+                .date-cell {
+                    white-space: nowrap;
+                    font-weight: 600;
+                }
+
+                td:last-child {
+                    max-width: 300px;
+                    word-break: break-word;
+                }
+
+                @media print {
+                    body {
+                        margin: 10px;
+                    }
+                }
+            </style>
+        </head>
+        <body>
+            <h2>Appointment Schedule Table</h2>
+            <h3>${escapeHtml(titleText)}</h3>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Day / Date</th>
+                        <th>Depart Time</th>
+                        <th>Appt Time</th>
+                        <th>Resident</th>
+                        <th>Doctor</th>
+                        <th>Driver</th>
+                        <th>Wait</th>
+                        <th>Address</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${rows}
+                </tbody>
+            </table>
+        </body>
+        </html>`;
+
+        printWindow.document.open();
+        printWindow.document.write(html);
+        printWindow.document.close();
+
+        printWindow.onload = () => {
+            printWindow.focus();
+            printWindow.print();
+            printWindow.close();
+        };
+    } catch (error) {
+        console.error("Print failed:", error);
         printWindow.close();
-    }, 300);
+        alert("Unable to generate appointment report.");
+    }
 }
+
+async function getAppDateDetailsForPrint() {
+    try {
+        const start = ec.getView().activeStart
+            .toISOString()
+            .split("T")[0];
+
+        const end = ec.getView().activeEnd
+            .toISOString()
+            .split("T")[0];
+
+        const response = await fetch(
+            `/AppointmentDetails?handler=GetAppointments&start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`
+        );
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (!Array.isArray(data)) {
+            return [];
+        }
+
+        return data.filter(event => {
+            const isInHouse =
+                event.extendedProps?.inhouse ??
+                event.inhouse ??
+                false;
+
+            return !isInHouse || checkbox1.checked;
+        });
+    } catch (error) {
+        console.error("Appointment fetch failed:", error);
+        return [];
+    }
+}
+
+function sortAppointmentsByStart(appointments, ascending = true) {
+    return [...appointments].sort((a, b) => {
+        const aTime = new Date(a.start).getTime();
+        const bTime = new Date(b.start).getTime();
+
+        if (Number.isNaN(aTime) && Number.isNaN(bTime)) return 0;
+        if (Number.isNaN(aTime)) return 1;
+        if (Number.isNaN(bTime)) return -1;
+
+        return ascending ? aTime - bTime : bTime - aTime;
+    });
+}
+
+function formatTime(date) {
+    if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
+        return "";
+    }
+
+    return date.toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true
+    });
+}
+
+function formatDate(date) {
+    if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
+        return "";
+    }
+
+    return date.toLocaleDateString("en-US", {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric"
+    });
+}
+
+function escapeHtml(value = "") {
+    return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+}
+
+document.getElementById("go-button").addEventListener("click", () => {
+    const year = parseInt(yearSelect.value, 10);
+    const month = parseInt(monthSelect.value, 10);
+
+// Move calendar to selected month/year
+    ec.setOption("date", new Date(year, month, 1));
+});
