@@ -43,31 +43,29 @@ namespace Appointments.Pages
             {
             if(UserInfo is object)
                 return UserInfo;
-            using(var context = new PrincipalContext(ContextType.Domain))
+            using var context = new PrincipalContext(ContextType.Domain);
+            var userPrincipal = UserPrincipal.FindByIdentity(context,IdentityType.SamAccountName,sUser);
+            if(userPrincipal!=null)
                 {
-                var userPrincipal = UserPrincipal.FindByIdentity(context,IdentityType.SamAccountName,sUser);
-                if(userPrincipal!=null)
-                    {
-                    DirectoryEntry? directoryEntry = userPrincipal.GetUnderlyingObject() as DirectoryEntry;
-                    UserDto oRet = new UserDto();
-                    oRet.sAMAccountName=sUser;
-                    oRet.FirstName=userPrincipal.GivenName;
-                    oRet.MI=userPrincipal.MiddleName;
-                    oRet.LastName=userPrincipal.Surname;
-                    oRet.DisplayName=userPrincipal.DisplayName;
-                    oRet.MbrEmpIndicator=directoryEntry.Properties["company"].Value==null ? "" : directoryEntry.Properties["company"].Value.ToString();
-                    oRet.MbrEmpNumber=userPrincipal.EmployeeId;
-                    if(oRet.MbrEmpNumber==null)
-                        oRet.MbrEmpNumber=(directoryEntry.Properties["title"].Value==null ? "" : directoryEntry.Properties["title"].Value.ToString());
-                    oRet.EmailAddress=userPrincipal.EmailAddress;
-                    oRet.ADSDescription=userPrincipal.Description;
-                    oRet.msExchHideFromAddressLists=(directoryEntry.Properties["msExchHideFromAddressLists"].Value==null ? false : directoryEntry.Properties["msExchHideFromAddressLists"].Value.ToString().ToLower().Equals("true"));
-                    if(oRet.msExchHideFromAddressLists)
-                        oRet.EmailAddress="";
+                DirectoryEntry? directoryEntry = userPrincipal.GetUnderlyingObject() as DirectoryEntry;
+                UserDto oRet = new UserDto();
+                oRet.sAMAccountName=sUser;
+                oRet.FirstName=userPrincipal.GivenName;
+                oRet.MI=userPrincipal.MiddleName;
+                oRet.LastName=userPrincipal.Surname;
+                oRet.DisplayName=userPrincipal.DisplayName;
+                oRet.MbrEmpIndicator=directoryEntry.Properties["company"].Value==null ? "" : directoryEntry.Properties["company"].Value.ToString();
+                oRet.MbrEmpNumber=userPrincipal.EmployeeId;
+                if(oRet.MbrEmpNumber==null)
+                    oRet.MbrEmpNumber=(directoryEntry.Properties["title"].Value==null ? "" : directoryEntry.Properties["title"].Value.ToString());
+                oRet.EmailAddress=userPrincipal.EmailAddress;
+                oRet.ADSDescription=userPrincipal.Description;
+                oRet.msExchHideFromAddressLists=(directoryEntry.Properties["msExchHideFromAddressLists"].Value==null ? false : directoryEntry.Properties["msExchHideFromAddressLists"].Value.ToString().ToLower().Equals("true"));
+                if(oRet.msExchHideFromAddressLists)
+                    oRet.EmailAddress="";
 
-                    UserInfo=oRet;
-                    return oRet;
-                    }
+                UserInfo=oRet;
+                return oRet;
                 }
             return null;
             }
@@ -94,8 +92,6 @@ namespace Appointments.Pages
 
         public async Task<JsonResult> OnGetGetAppointments(string start,string end)
             {
-            string sMsg = "";
-
             if(!DateTimeOffset.TryParse(start,CultureInfo.InvariantCulture,DateTimeStyles.AssumeUniversal,out var startDt)||
            !DateTimeOffset.TryParse(end,CultureInfo.InvariantCulture,DateTimeStyles.AssumeUniversal,out var endDt))
                 {
@@ -110,7 +106,7 @@ namespace Appointments.Pages
             sFilter=sFilter+"And [FullName] Is Not Null";
             //if(sFilter==null)
             //    GetFilterIn();
-            lstAppointments=_appointmentsData.LoadAppointments(sFilter,out sMsg);
+            lstAppointments=_appointmentsData.LoadAppointments(sFilter,out string sMsg);
             if((TempData["Message"]==null||(TempData["Message"]?.ToString()?.Length??0)==0)&&sMsg!=null&&sMsg.Trim().Length>0)
                 TempData["Message"]=sMsg;
             else
@@ -140,14 +136,14 @@ namespace Appointments.Pages
                             {
                             apptime = d.ApptTm,
                             nursenotes = d.Notes,
-                            wait = d.Wait==true?"Yes":"No",
+                            wait = d.Wait==true ? "Yes" : "No",
                             badgeText = inHouse ? "I" : "N",
                             badgeClass = inHouse ? "badge-danger" : "",
                             inhouse = inHouse,
                             flag = inHouse ? false : true,
                             doctorName = d.DoctorName,
                             doctorAddress = d.Street+" "+d.City,
-                            driverName=d.DriverName
+                            driverName = d.DriverName
                             }
                         };
                 }).ToList();
