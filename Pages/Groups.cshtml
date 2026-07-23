@@ -1,0 +1,523 @@
+﻿@page
+@model Appointments.Pages.GroupsModel
+@{
+    ViewData["Title"] = "Group Members";
+}
+<style type="text/css">
+    .lit {
+        color: red;
+        font-size: x-large;
+    }
+   
+    .filterBar {
+        background-color: white; /*#D1DCEB; */
+        vertical-align: middle;
+        text-align: right;
+        padding: 9px;
+        /* width: 99%; */
+        height: 50px;
+    }
+
+    .btn {
+        background-color: #0073F9;
+        color: white;
+        border: none;
+        padding: 5px 10px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 12px;
+        margin: 4px 2px;
+        cursor: pointer;
+    }
+
+    .btn:hover {
+        background-color: #0073F9;
+        color: white;
+        border: none;
+        padding: 5px 10px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+   /*      font-size: 16px; */
+        margin: 4px 2px;
+        cursor: pointer;
+    }
+
+    
+    tr:nth-child(even) {
+        background-color: #E6E6E6;
+    }
+
+    .sticky-top-sub {
+        position: -webkit-sticky;
+        position: sticky;
+        top: 0;
+        z-index: 2;
+    }
+
+    .wrapper {
+        position: relative;
+        overflow-y: auto;
+        z-index: 1;
+        content: '';
+    }
+
+    .nav-items {
+        color: white; /*#666666;*/
+        background-color: floralwhite; /* #9BB7D4; */
+        text-decoration: none;
+        font-weight: bold;
+/*         font-size: 18px;
+        border: solid white 1pt; */
+        cursor: pointer;
+        padding: 4px;
+    }
+
+    .nav-links {
+        display: block;
+        width: 100%;
+        text-decoration: none;
+    }
+    .nav-links:hover {
+        background-color: lightslategray;
+        text-decoration: none;
+        font-weight: bold;
+        color: white;
+        /* font-size: 20px; */
+        /* color: red; */
+        }
+
+    .nav-items.active {
+        background-color: #D1DCEB;
+        font-weight: bold;
+        /* width: 100%; */
+        color: royalblue;
+        padding: 4px;
+        white-space:nowrap;
+    }
+
+    .nav-items .nav-links.active {
+        background-color: #D1DCEB;
+        width: 100%;
+        color: blue;
+        padding: 4px;
+    }
+    a {
+        color: #666666; 
+    }
+
+/*     .nav-tabs .nav-item.active,
+    .nav-tabs .nav-item.show .nav-link {
+        background-color: #D1DCEB;
+        text-decoration: none;
+        font-weight: bold;
+        font-size: 20px;
+        color: red;
+    } */
+
+    .fix-div {
+        background-color: white;
+        position: fixed;
+        height: auto;
+        width: 100%;
+        left: 0;
+        top: 0;
+        z-index: 1;
+    }
+
+    .filterDiv {
+        width: 100%;
+    }
+
+</style>
+<body>
+    <main>
+    <div id="divSecurity" class="row filterDiv" style="position:absolute;">
+    <div class="col-lg-12 col-md-12 col-sm-12 col-xl-12" style="background-color:white;">
+        <input type="hidden" id="txtGroupID" />
+        <div>
+            <table id="id_tableusergroups" class="table-borderless" style="width:90%; background-color:white;">
+                <tbody>
+                 <tr><td colspan="6" align="center"><h3 style="text-align: center; vertical-align:top; font-size: 25px">Groups and Members</h3></td></tr>
+                    <tr style="background-color:white;">
+                        <td style="width: 10%; vertical-align:top;">
+                            <div class="sticky-top" style="background-color: white; padding-right: 10px;">
+                                <table class="filterBar" style="width: 100%;">
+                                    <tr>
+                                        <td>
+                                             <table class="filterBar" style="width:100%">
+                                                <tr>
+                                                    <td style="font-size:18px; font-weight:bold; text-align:left">Groups</td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+
+
+                            <table style="background-color:lightblue">
+                                <tr>
+                                    <td style="background-color:white;">
+                                        <div style="padding: 1px;display:block;white-space:nowrap;">
+                                                    <input type="button" class="btn btn-sm btn-success" id="btnNewGroup"
+                                                   onclick="GroupAddClick();" value="Add" />&nbsp;&nbsp;
+                                            <input type="button" class="btn btn-sm" id="btnEditGroup" disabled="disabled"
+                                                   onclick="GroupEditClick();" value="Edit" />&nbsp;&nbsp;
+                                            <input type="button" class="btn btn-sm" id="btnDeleteGroup"
+                                                   onclick="GroupDeleteClick();" value="Delete" disabled="disabled" />&nbsp;&nbsp;
+                                            <input type="button" class="btn btn-sm btn-success" id="btnCancelAdd" style="display:none;"
+                                                   onclick="GroupCancelClick();" value="Cancel" />
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="background-color:transparent;">
+                                        <div id="groupList" name="groupList">
+                                            <ul id="lstGroups" class="nav nav-tabs flex-column">
+
+                                                <li id="lstNewGroup" class="nav-items active" liID="0" style="display:none;">
+                                                    <input type="text" id="txtNewGroupName" style="width:160px;" onchange="document.getElementById('btnNewGroup').disabled = (this.value.trim().length==0 || this.value == '0')" />&nbsp;&nbsp;
+                                                    <input id="btnNewGroup" type="button" class="btn btn-sm btn-success" onclick="var sLabel = document.getElementById('txtNewGroupName').value; ChangeGroups(0, sLabel, false); " value="Save" />
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                        <td style="width: 5%">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+                        <td style="width: 40%; vertical-align:top;" id="tdMembers">
+                            <div class="row filterDiv">
+                                <div class="col-lg-12 col-md-12 col-sm-12 col-xl-12" style="background-color:white;vertical-align:top">
+                                    <table class="filterBar" style="width:100%">
+                                        <tr>
+                                            <td>
+                                                 <table class="filterBar" style="width:100%">
+                                                    <tr>
+                                                        <td style="font-size:18px; font-weight:bold; text-align:left">Group Members</td>
+                                                        <td style="text-align:right;"><input type="button" class="btn btn-sm btn-success" value="Remove Selected" onclick="removeGroupMembers($('#txtGroupID').val());" /></td>
+                                                    </tr>
+                                                </table>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                                <br />
+                                <br />
+                            </div>
+                            <div id="divMembers" style="vertical-align:top;">
+                                <table class="table-sm table" id="tblGroupMembers" style="overflow:auto;">
+                                    <thead class="thead-light sticky-top-sub">
+                                        <tr>
+                                            <th style="text-align: left; width: 5%; border: 1px white; border-style: solid; vertical-align: middle; "></th>
+                                            <th field="LastName" style="text-align: left; width: 15%; border: 1px white; border-style: solid; vertical-align: middle; ">Last Name</th>
+                                            <th field="FirstName" style="text-align: left; width: 10%; border: 1px white; border-style: solid; vertical-align: middle; ">First Name</th>
+                                            <th field="Middle" style="text-align: left; width: 10%; border: 1px white; border-style: solid; vertical-align: middle; ">Middle</th>
+                                            <th field="SAmaccountName" style="text-align: left; width: 20%; border: 1px white; border-style: solid; vertical-align: middle; ">Login ID</th>
+                                            <th field="EmployeeMemberInd" style="text-align: left; width: 20%; border: 1px white; border-style: solid; vertical-align: middle; ">Member Ind</th>
+                                            <th field="EmployeeMemberNumber" style="text-align: left; width: 20%; border: 1px white; border-style: solid; vertical-align: middle; ">Member Number</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody style="font-size:15px !important">
+                                    </tbody>
+                                </table>
+                                <div style="margin-bottom: 200px !important" />
+                            </div>
+                        </td>
+                        <td style="width: 5%">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+                        <td style="width: 40%; vertical-align:top;" id="tdUsers">
+
+
+                            <div class="row filterDiv">
+                                <div class="col-lg-12 col-md-12 col-sm-12 col-xl-12" style="background-color:white;vertical-align:top">
+                                     <table class="filterBar" style="width:100%">
+                                        <tr>
+                                            <td>
+                                                <table class="filterBar" style="width:100%">
+                                                    <tr>
+                                                        <td style="font-size:18px; font-weight:bold; text-align:left">Other Users</td>
+                                                        <td style="text-align:right;"><input type="button" class="btn btn-sm btn-success" value="Add Selected" onclick="addGroupMembers($('#txtGroupID').val());" /></td>
+                                                    </tr>
+                                                </table>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                                <br />
+                                <br />
+                            </div>
+
+                            <div id="divUsers" style="vertical-align:top;">
+                                <table class="table-sm table" id="tblUserList" style="overflow:auto; vertical-align:top;">
+                                    <thead class="thead-light sticky-top-sub">
+
+                                        <tr>
+                                            <th style="text-align: left; width: 5%; border: 1px white; border-style: solid; vertical-align: middle; "></th>
+                                            <th field="LastName" style="text-align: left; width: 15%; border: 1px white; border-style: solid; vertical-align: middle; ">Last Name</th>
+                                            <th field="FirstName" style="text-align: left; width: 10%; border: 1px white; border-style: solid; vertical-align: middle; ">First Name</th>
+                                            <th field="Middle" style="text-align: left; width: 10%; border: 1px white; border-style: solid; vertical-align: middle; ">Middle</th>
+                                            <th field="SAmaccountName" style="text-align: left; width: 20%; border: 1px white; border-style: solid; vertical-align: middle; ">Login ID</th>
+                                            <th field="EmployeeMemberInd" style="text-align: left; width: 20%; border: 1px white; border-style: solid; vertical-align: middle; ">Member Ind</th>
+                                            <th field="EmployeeMemberNumber" style="text-align: left; width: 20%; border: 1px white; border-style: solid; vertical-align: middle; ">Member Number</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody style="font-size:15px !important">
+                                    </tbody>
+                                </table>
+                                <div style="margin-bottom: 200px !important" />
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+</main>
+</body>
+<script src="~/js/site.js"></script>
+<script src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
+<link href="https://cdn.datatables.net/2.0.4/css/dataTables.dataTables.css" rel="stylesheet" type="text/css" />
+<script src="https://cdn.datatables.net/2.0.4/js/dataTables.min.js" defer></script>
+
+
+<script type="text/javascript">
+
+    $(document).ready(function () {
+        loadGroups();  
+    });
+    function loadGroups() {
+        //alert($("#lstGroups").find("option").length);
+        //$("#lstGroups").find("option").remove();
+        document.getElementById("lstGroups").innerHTML = "<li id=\"lstNewGroup\" class=\"nav-items active\" liID=\"0\" style=\"display: none; \">" +
+            "<input type = \"text\" id = \"txtNewGroupName\" style = \"width:160px;display: inline-block;\" onchange = \"document.getElementById('btnNewGroup').disabled = this.value.trim().length==0\" />&nbsp;&nbsp;" +
+            "<input id=\"btnNewGroup\" type=\"button\" class=\"btn btn-sm\" onclick=\"var sLabel = document.getElementById('txtNewGroupName').value; ChangeGroups(0, sLabel, false); \" value=\"Save\" /></li >";
+            $.ajax({
+            type: "GET",
+            url: "Groups?handler=GetGroups",
+            success: function (data) {
+                $.each(data, function (i, v) {
+                    $('#lstGroups').append("<li id='lstGroup_" + v.groupID + "' class='nav-items'><a id='grp_" + v.groupID + "' class='nav-links' data-toggle='tab' onclick='GroupItemClick(" + v.groupID + ");'>" + v.label + "</a></li>");
+                    $('#lstGroups').append("<li id='lstEditGroup_" + v.groupID + "' class='nav-items active' style='display:none;'>" +
+                        "<input type=\"text\" id=\"txtEditGroupName_" + v.groupID + "\" style=\"width: 160px;display: inline-block;\" value=\"" + v.label + "\" onchange=\"document.getElementById('btnEditGroup').disabled = (this.value.trim().length==0);\" />&nbsp;&nbsp;" +
+                        "<input id=\"btnEditGroup\" type=\"button\" class=\"btn  btn-sm\" onclick=\"ChangeGroups(document.getElementById('lstNewGroup').getAttribute('liID'), document.getElementById('txtEditGroupName_" + v.groupID + "').value, false);\" value=\"Save\" /></li>");
+                })
+            },
+            error: function (error) {
+                console.log('Error populating house selector on save modal', error);
+                alert(error.responseText.substring(0, error.responseText.indexOf('\n')).replace("System.SystemException:", ""));
+            }
+        });
+    }
+    function loadGroupMembers(GroupID) {
+        $('#tblGroupMembers').dataTable({
+            destroy: true,
+            "sPaginationType": "full_numbers",
+            scrollY: '300px',
+            "iDisplayLength": 10,
+
+            ajax: {
+                type: "GET",
+                url: "Groups?handler=GetMembers",
+                data: { GroupID },
+                dataSrc: ""
+            },
+            "columns": [
+                {
+                    "data": "sAmaccountName",
+                    "render": function (data, type, row, meta) {
+                        var defaultContent = "";
+                        var sid = "checkUserMember_" + data;
+                        if (type === 'display') {
+                            defaultContent = '<input type="checkbox" name="checkUserMember" id="' + sid + '" />';
+                        }
+                        return defaultContent;
+                    },
+                    orderable: false
+                },
+                { "data": "lastName" },
+                { "data": "firstName" },
+                { "data": "middle" },
+                /*{ "data": "displayName" },*/
+                { "data": "sAmaccountName" },
+                { "data": "employee_Member_Ind" },
+                { "data": "employee_Member_Number" },
+            ],
+        });
+    }
+    function loadNonMembers(GroupID) {
+        $('#tblUserList').dataTable({
+            destroy: true,
+            "sPaginationType": "full_numbers",
+            scrollY: '300px',
+            "iDisplayLength": 10,
+
+            ajax: {
+                type: "GET",
+                url: "Groups?handler=GetUsers",
+                data: { GroupID },
+                dataSrc: ""
+            },
+            "columns": [
+                {
+                    "data": "sAmaccountName",
+                    "render": function (data, type, row, meta) {
+                        var defaultContent = "";
+                        var sid = "checkUser_" + data;
+                        if (type === 'display') {
+                            defaultContent = '<input type="checkbox" name="checkUser" id="' + sid + '" />';
+                        }
+                        return defaultContent;
+                    },
+                    orderable: false
+                },
+                { "data": "lastName" },
+                { "data": "firstName" },
+                { "data": "middle" },
+                /*{ "data": "displayName" },*/
+                { "data": "sAmaccountName" },
+                { "data": "employee_Member_Ind" },
+                { "data": "employee_Member_Number" },
+            ],
+        });
+    }
+    function GroupItemClick(GroupID) {
+        try { GroupCancelClick(); } catch (e) { }
+        $("#txtGroupID").val(GroupID);
+        document.getElementById('lstNewGroup').setAttribute('liID', GroupID);
+        loadGroupMembers(GroupID);
+        loadNonMembers(GroupID);
+        document.getElementById('btnDeleteGroup').disabled = (GroupID <= 0);
+        document.getElementById('btnEditGroup').disabled = (GroupID <= 0);
+
+        const items = document.querySelectorAll('.nav-links');
+        items.forEach(item => item.classList.remove('active'));
+        document.getElementById("grp_" + GroupID).classList.add('active');
+    }
+    function GroupAddClick() {
+        try { GroupCancelClick(); } catch (e) { }
+        document.getElementById('btnCancelAdd').style = 'display:inline';
+        document.getElementById('lstNewGroup').style = 'display:inline';
+    }
+    function GroupEditClick() {
+        try { GroupCancelClick(); } catch (e) { }
+        var controlName = "lstGroup_" + document.getElementById("lstNewGroup").getAttribute("liID");
+        document.getElementById(controlName).style = "display:none";
+        controlName = "lstEditGroup_" + document.getElementById("lstNewGroup").getAttribute("liID");
+        document.getElementById(controlName).style = "display:inline";
+        document.getElementById('btnCancelAdd').style = 'display:inline';
+    }
+    function GroupDeleteClick() {
+        ChangeGroups(document.getElementById('lstNewGroup').getAttribute('liID'), 'delete', true);
+    }
+    function GroupCancelClick() {
+        var n = document.getElementById("lstNewGroup").getAttribute("liID");
+        if (n != null && n != 0) {
+            var controlName = "lstGroup_" + document.getElementById("lstNewGroup").getAttribute("liID");
+            document.getElementById(controlName).style = "display:inline";
+            controlName = "lstEditGroup_" + document.getElementById("lstNewGroup").getAttribute("liID");
+            document.getElementById(controlName).style = "display:none";
+        }
+        document.getElementById('btnCancelAdd').style = 'display:none'; document.getElementById('lstNewGroup').style = 'display:none';
+    }
+
+
+    function removeGroupMembers(GroupID) {
+        var loginList = '';
+
+        $('input[name=checkUserMember]', "#tblGroupMembers").each(function () {
+            var chk = $(this).is(':checked');
+            if (chk) {
+                var chkId = $(this).attr('id');
+                var arrId = chkId.split("_");
+                loginList += (loginList.length == 0 ? "" : ",") + arrId[1].toString();
+            }
+        });
+        if (loginList != '') {
+            if (confirm("Are you sure?, would you like to remove the selected record(s) from the group? ")) {
+                $.ajax({
+                    headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+                    type: "GET",
+                    url: "Groups?handler=RemoveMembers",
+                    data: { GroupID, loginList },
+                    success: function () {
+                        loadGroupMembers(GroupID); loadNonMembers(GroupID);
+                    },
+                    error: function (error) {
+                        console.log('Error populating house selector on save modal', error);
+                        alert(error.responseText.substring(0, error.responseText.indexOf('\n')).replace("System.SystemException:", ""));
+                    }
+                });
+            }
+        }
+        else {
+            alert("Please select records to remove from the group.");
+        }
+    }
+    function addGroupMembers(GroupID) {
+        var loginList = '';
+        $("input[name=checkUser]", "#tblUserList").each(function () {
+
+            var chk = $(this).is(':checked');
+            if (chk) {
+                var chkId = $(this).attr('id');
+                var arrId = chkId.split("_");
+                loginList += (loginList.length == 0 ? "" : ",") + arrId[1].toString();
+            }
+        });
+        if (loginList != '') {
+            if (confirm("Are you sure?\n Would you like to add the selected record(s) to the group? ")) {
+                $.ajax({
+                    headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+                    type: "GET",
+                    url: "Groups?handler=AddMembers",
+                    data: { GroupID, loginList },
+                    success: function () {
+                        loadGroupMembers(GroupID); loadNonMembers(GroupID);
+                    },
+                    error: function (error) {
+                        console.log('Error populating house selector on save modal', error);
+                        alert(error.responseText.substring(0, error.responseText.indexOf('\n')).replace("System.SystemException:", ""));
+                    }
+                });
+            }
+        }
+        else {
+            alert("Please select records to add to the group.");
+        }
+    }
+    function ChangeGroups(GroupID, GroupDescr, bDelete) {
+        if (GroupDescr == null || GroupDescr.trim().length == 0) {
+            alert("ERROR: Group description cannot be empty.");
+            return false;
+        }
+        var sLabel = GroupDescr.trim();
+
+        if (bDelete && GroupID <= 0) {
+            alert("ERROR: Cannot delete non existent or system group.");
+            return false;
+        }
+        $.ajax({
+            headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+            url: "Groups?handler=ChangeGroupList",
+            type: "GET",
+            data: { GroupID, sLabel, bDelete },
+            success: function () {
+                //reload and buttons manipulation
+                //if (GroupID != 0)
+                    $("#btnCancelAdd").click();
+                //ClearGroups();
+                loadGroups();
+                // loadGroupMembers(0); loadNonMembers(0);
+                 GroupItemClick(0);
+                alert("The group is updated successfully!");
+            },
+            error: function (error) {
+                console.log('Error populating house selector on save modal', error);
+                alert(error.responseText.substring(0, error.responseText.indexOf('\n')).replace("System.SystemException:", ""));
+            }
+        });
+    }
+</script>

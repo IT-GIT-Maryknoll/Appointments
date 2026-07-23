@@ -117,13 +117,26 @@ namespace Appointments.Database.Repository
             //        return false; // Return false as a default if there's an error
             //    }
             //}
-            public List<DriversDto> LoadDrivers(out string sMsg)
+            public List<DriversDto> LoadDrivers(int iActive, out string sMsg)
             {
-                sMsg = string.Empty;
+            string sWhereClause = string.Empty;
+            switch (iActive)
+            {
+                case 1: // Active
+                    sWhereClause = " WHERE [InActive] = 0 ";
+                    break;
+                case 2: // Inactive
+                    sWhereClause = " WHERE [InActive] = 1 ";
+                    break;
+                default: // All
+                    sWhereClause = string.Empty;
+                    break;
+            }
+            sMsg = string.Empty;
                 try
                 {
                     using var connection = _context.CreateConnection();
-                    var query = "SELECT [DriverID],[Last],[First],[Title],[Priority],[InActive] FROM tblDrivers ORDER BY [Last]";
+                    var query = "SELECT [DriverID],[Last],[First],[Title],[Priority],[InActive] FROM tblDrivers " + sWhereClause + " ORDER BY [Last]";
                     var drivers = connection.QueryAsync<DriversDto>(query);
                     return drivers.Result.ToList();
                 }

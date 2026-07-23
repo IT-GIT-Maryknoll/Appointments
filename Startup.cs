@@ -36,6 +36,8 @@ namespace Appointments
             services.AddScoped<IStaffRepository, StaffRepository>();
             services.AddScoped<IDriversRepository, DriversRepository>();
             services.AddScoped<ICarsRepository, CarsRepository>();
+            services.AddScoped<IGroupsRepository, GroupsRepository>();
+            services.AddScoped<IPermissionsRepository, PermissionsRepository>();
 
             services.AddSession(options =>
             {

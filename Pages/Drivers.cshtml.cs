@@ -11,69 +11,30 @@ using System.DirectoryServices.AccountManagement;
 
 namespace Appointments.Pages
 {
-    public class DriversModel(ILogger<DriversModel> logger, IConfiguration configuration, IDriversRepository driversData) : PageModel
+    public class DriversModel(ILogger<DriversModel> logger, IConfiguration configuration, IDriversRepository driversData, IPermissionsRepository permissionsRepository) :
+        BasePageModel(logger, configuration, permissionsRepository)
     {
         private readonly ILogger<DriversModel> _logger = logger;
         private readonly IConfiguration _configuration = configuration;
         private readonly IDriversRepository _driversData = driversData;
         
-        public required UserDto UserInfo;
         public List<DriversDto> lstDrivers = new List<DriversDto>();
+        public string sMask = "";
+        public int iLoadActive = 1;
 
-        public void OnGet()
+        public void OnGet(string sActive)
         {
-            string sMsg = "";
+            int iActive = 1;
+            if (!int.TryParse(sActive, out iActive)) iActive = 1;
+            OnGetBase();
+            //string sMsg = "";
 
-            UserInfo = GetUserInfo(GetUserName());
-            lstDrivers = _driversData.LoadDrivers(out sMsg);
-
+            //UserInfo = GetUserInfo(GetUserName());
+            iLoadActive = iActive;
+            lstDrivers = _driversData.LoadDrivers(iActive, out sMsg);
+            sMask = ViewData["DriversAccessMask"]?.ToString() ?? "";
         }
-        private string GetUserName()
-        {
-            if (HttpContext == null) return null;
 
-            var userName = HttpContext.User.Identity.Name;
-            string sUserConfig = configuration.GetValue<string>("UName");
-            if (sUserConfig != null && sUserConfig.Trim().Length > 0) userName = sUserConfig;
-            if (string.IsNullOrEmpty(userName) || userName.Length < 0)
-            {
-                return "";
-            }
-            else
-            {
-                var arrName = userName.Split("\\");
-                return arrName[1];
-            }
-        }
-        public UserDto GetUserInfo(string sUser)
-        {
-            if (UserInfo is object) return UserInfo;
-            using (var context = new PrincipalContext(ContextType.Domain))
-            {
-                var userPrincipal = UserPrincipal.FindByIdentity(context, IdentityType.SamAccountName, sUser);
-                if (userPrincipal != null)
-                {
-                    DirectoryEntry? directoryEntry = userPrincipal.GetUnderlyingObject() as DirectoryEntry;
-                    UserDto oRet = new UserDto();
-                    oRet.sAMAccountName = sUser;
-                    oRet.FirstName = userPrincipal.GivenName;
-                    oRet.MI = userPrincipal.MiddleName;
-                    oRet.LastName = userPrincipal.Surname;
-                    oRet.DisplayName = userPrincipal.DisplayName;
-                    oRet.MbrEmpIndicator = directoryEntry.Properties["company"].Value == null ? "" : directoryEntry.Properties["company"].Value.ToString();
-                    oRet.MbrEmpNumber = userPrincipal.EmployeeId;
-                    if (oRet.MbrEmpNumber == null) oRet.MbrEmpNumber = (directoryEntry.Properties["title"].Value == null ? "" : directoryEntry.Properties["title"].Value.ToString());
-                    oRet.EmailAddress = userPrincipal.EmailAddress;
-                    oRet.ADSDescription = userPrincipal.Description;
-                    oRet.msExchHideFromAddressLists = (directoryEntry.Properties["msExchHideFromAddressLists"].Value == null ? false : directoryEntry.Properties["msExchHideFromAddressLists"].Value.ToString().ToLower().Equals("true"));
-                    if (oRet.msExchHideFromAddressLists) oRet.EmailAddress = "";
-
-                    UserInfo = oRet;
-                    return oRet;
-                }
-            }
-            return null;
-        }
         public JsonResult OnGetGetDriverById(int id)
         {
             string sMsg = "";
@@ -103,5 +64,5 @@ namespace Appointments.Pages
             sMsg = "";
             return new JsonResult(bRet);
         }
-    }
+     }
 }

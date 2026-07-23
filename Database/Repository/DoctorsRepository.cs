@@ -54,9 +54,9 @@ namespace Appointments.Database.Repository
             parameters.Add("Company", doctor.Company);
             parameters.Add("Title", doctor.Title);
             parameters.Add("Specialty", doctor.Specialty);
-            parameters.Add("AddDate", doctor.AddDate);
+            if (doctor.DoctorKey <= 0) parameters.Add("AddDate", doctor.AddDate);
             parameters.Add("ModDate", doctor.ModDate);
-            parameters.Add("CreatedBy", doctor.CreatedBy);
+            if (doctor.DoctorKey <= 0) parameters.Add("CreatedBy", doctor.CreatedBy);
             parameters.Add("ModifiedBy", doctor.ModifiedBy);
             parameters.Add("IsDeleted", doctor.IsDeleted);
 
@@ -66,7 +66,7 @@ namespace Appointments.Database.Repository
                 if (doctor.DoctorKey > 0)
                 {
                     query = @"UPDATE [dbo].[tblDoctors] SET [Last] = @Last ,[First]= @First ,[Company]= @Company ,[Title]= @Title,[Specialty]= @Specialty,
-[ModDate]= @ModDate,[ModifiedBy]= @ModifiedBy,[IsDeleted]=@IsDeleted
+[ModDate]= @ModDate,[ModifiedBy]= @ModifiedBy, [IsDeleted]=@IsDeleted
                               WHERE DoctorKey = @DoctorKey";
                     connection.Execute(query, parameters);
                 }
@@ -148,14 +148,44 @@ namespace Appointments.Database.Repository
             }
         }
 
-        public List<DoctorsDto> LoadDoctors(bool bActive, out string sMsg)
+        //public List<DoctorsDto> LoadDoctors(bool bActive, out string sMsg)
+        //{
+        //    sMsg = string.Empty;
+        //    try
+        //    {
+        //        using var connection = _context.CreateConnection();
+        //        var query = "SELECT [DoctorKey],[Last],[First],[Company],[Title],[Specialty],[IsDeleted] FROM qryDoctors " + (bActive ? " WHERE IsDeleted = 0 " : "") + " ORDER BY Last;";
+        //        var doctors = connection.QueryAsync<DoctorsDto>(query, new { IsDeleted = !bActive });
+        //        return doctors.Result.ToList();
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        sMsg = "ERROR: " + ex.Message + " " + (ex.InnerException == null ? "" : ex.InnerException.Message);
+        //        _logger.LogError(ex, "Error loading doctors");
+        //        return new List<DoctorsDto>();
+        //    }
+        //}
+        public List<DoctorsDto> LoadDoctors(int iActive, out string sMsg)
         {
             sMsg = string.Empty;
+            string sWhereClause = string.Empty;
+            switch (iActive)
+            {
+                case 1: // Active
+                    sWhereClause = " WHERE IsDeleted = 0 ";
+                    break;
+                case 2: // Inactive
+                    sWhereClause = " WHERE IsDeleted = 1 ";
+                    break;
+                default: // All
+                    sWhereClause = string.Empty;
+                    break;
+            }
             try
             {
                 using var connection = _context.CreateConnection();
-                var query = "SELECT [DoctorKey],[Last],[First],[Company],[Title],[Specialty],[IsDeleted] FROM qryDoctors " + (bActive ? " WHERE IsDeleted = 0 " : "") + " ORDER BY Last;";
-                var doctors = connection.QueryAsync<DoctorsDto>(query, new { IsDeleted = !bActive });
+                var query = "SELECT [DoctorKey],[Last],[First],[Company],[Title],[Specialty],[IsDeleted] FROM qryDoctors " + sWhereClause + " ORDER BY Last;";
+                var doctors = connection.QueryAsync<DoctorsDto>(query);
                 return doctors.Result.ToList();
             }
             catch (Exception ex)
@@ -165,7 +195,6 @@ namespace Appointments.Database.Repository
                 return new List<DoctorsDto>();
             }
         }
- 
         public List<LocationDto> GetDoctorLocations(int id, out string sMsg)
         {
             sMsg = string.Empty;

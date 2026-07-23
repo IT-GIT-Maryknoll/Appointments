@@ -2,6 +2,10 @@
 @model Appointments.Pages.NursesModel
 @{
     ViewData["Title"] = "Nurses";
+    bool bAdd = Model.sMask != null && Model.sMask.IndexOf("A") >= 0;
+    bool bEdit = Model.sMask != null && Model.sMask.IndexOf("E") >= 0;
+    bool bDelete = Model.sMask != null && Model.sMask.IndexOf("D") >= 0;
+    var sCaption = bEdit ? "Edit" : "Details";
 }
 <body>
     <main style="height:stretch">
@@ -23,8 +27,14 @@
                         {
                             <tr style="text-align:left;">
                                 <td>
-                                    <input type="button" id="btnEdit_@nurse.EmployeeID" value="Edit" class="btn btn-link" onclick="setEdit($(this).closest('tr'));" />
-                                    <input type="button" id="btnDel_@nurse.EmployeeID" value="Delete" class="btn btn-link" onclick="setDelete($(this).closest('tr'));" />
+                                    @if (bEdit)
+                                    {
+                                        <input type="button" id="btnEdit_@nurse.EmployeeID" value="Edit" class="btn btn-link" onclick="setEdit($(this).closest('tr'));" />
+                                    }
+                                    @if (bDelete)
+                                    {
+                                        <input type="button" id="btnDel_@nurse.EmployeeID" value="Delete" class="btn btn-link" onclick="setDelete($(this).closest('tr'));" />
+                                    }
                                 </td>
                                 <td>@nurse.EmployeeID</td>
                                 <td>@nurse.LastName</td>
@@ -46,7 +56,7 @@
 
     <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js" defer></script>
     <script src="https://cdn.datatables.net/2.1.8/js/dataTables.js" defer></script>
-    <script src="https://cdn.datatables.net/2.1.8/js/dataTables.jqueryui.js" defer></script>
+@*     <script src="https://cdn.datatables.net/2.1.8/js/dataTables.jqueryui.js" defer></script> *@
     <script src="https://cdn.datatables.net/buttons/3.2.0/js/dataTables.buttons.js" defer></script>
     <script src="https://cdn.datatables.net/buttons/3.2.0/js/buttons.jqueryui.js" defer></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" defer></script>
@@ -68,15 +78,18 @@
                             { extend: 'pdf', className: 'btn btn-primary' },
                             { extend: 'print', className: 'btn btn-primary' }
                         ];
-
+            var bAdd = @bAdd.ToString().ToLower();
+            bAdd = (bAdd === "true");
+            if (bAdd) {
                 arr.unshift({ extends: 'button', className: 'btn btn-primary', id: 'btnNewChoice', text: 'Add New', action: function () { setNew(); }});
+            }
 
             $('#tblNurses').dataTable({
                 order: [[2, 'asc']],
                 destroy: true,
                 scroller: true,
                 "sPaginationType": "full_numbers",
-                scrollY:  gridHeight(),   //'550px',
+                scrollY:  '400px',
                 // contentHeight:
                 "iDisplayLength": 100,
                columnDefs: [
@@ -106,8 +119,9 @@
             }
             var tdObj =arguments[0].find("td").eq(0);
             $(tdObj).empty();
+
             $(tdObj).html('<input type="button" id="btnUpdate_' + nurseId + '" value="Update" class="btn btn-link" onclick="setUpdate($(this).closest(\'tr\'), false);" />' +
-                        '<input type="button" id="btnDel_' + nurseId + '" value="Cancel" class="btn btn-link" onclick="setCancel($(this).closest(\'tr\'));" />');
+                        '<input type="button" id="btnCancel_' + nurseId + '" value="Cancel" class="btn btn-link" onclick="setCancel($(this).closest(\'tr\'));" />');
             enableNew();
         }
         function setDelete(trObj) {
@@ -126,8 +140,21 @@
             $(trObj).find("td").eq(3).empty().text(firstName);
             var tdObj =$(trObj).find("td").eq(0);
             $(tdObj).empty();
-            $(tdObj).html('<input type="button" id="btnEdit_' + nurseId + '" value="Edit" class="btn btn-link" onclick="setEdit($(this).closest(\'tr\'));" />' +
-                        '<input type="button" id="btnDel_' + nurseId + '" value="Delete" class="btn btn-link" onclick="setDelete($(this).closest(\'tr\'));" />');
+            var bEdit = @bEdit.ToString().ToLower();
+            //bEdit = (bEdit === "true");
+            var bDelete = @bDelete.ToString().ToLower();
+            //bDelete = (bDelete === "true");
+            var html = '';
+            if (bEdit) {
+                html += '<input type="button" id="btnEdit_' + nurseId + '" value="Edit" class="btn btn-link" onclick="setEdit($(this).closest(\'tr\'));" />';
+            }
+            if (bDelete) {
+                html += '<input type="button" id="btnDel_' + nurseId + '" value="Delete" class="btn btn-link" onclick="setDelete($(this).closest(\'tr\'));" />';
+            }
+            $(tdObj).html(html);
+
+            // $(tdObj).html('<input type="button" id="btnEdit_' + nurseId + '" value="Edit" class="btn btn-link" onclick="setEdit($(this).closest(\'tr\'));" />' +
+            //             '<input type="button" id="btnDel_' + nurseId + '" value="Delete" class="btn btn-link" onclick="setDelete($(this).closest(\'tr\'));" />');
                 enableNew();
         }
         function setUpdate(trObj, bNew) {
@@ -140,8 +167,21 @@
                 $(trObj).find("td").eq(3).empty().text(firstName);
                 var tdObj =$(trObj).find("td").eq(0);
                 $(tdObj).empty();
-                $(tdObj).html('<input type="button" id="btnEdit_' + nurseId + '" value="Edit" class="btn btn-link" onclick="setEdit($(this).closest(\'tr\'));" />' +
-                            '<input type="button" id="btnDel_' + nurseId + '" value="Delete" class="btn btn-link" onclick="setDelete($(this).closest(\'tr\'));" />');
+            var bEdit = @bEdit.ToString().ToLower();
+            //bEdit = (bEdit === "true");
+            var bDelete = @bDelete.ToString().ToLower();
+            //bDelete = (bDelete === "true");
+            var html = '';
+            if (bEdit) {
+                html += '<input type="button" id="btnEdit_' + nurseId + '" value="Edit" class="btn btn-link" onclick="setEdit($(this).closest(\'tr\'));" />';
+            }
+            if (bDelete) {
+                html += '<input type="button" id="btnDel_' + nurseId + '" value="Delete" class="btn btn-link" onclick="setDelete($(this).closest(\'tr\'));" />';
+            }
+            $(tdObj).html(html);
+
+                // $(tdObj).html('<input type="button" id="btnEdit_' + nurseId + '" value="Edit" class="btn btn-link" onclick="setEdit($(this).closest(\'tr\'));" />' +
+                //             '<input type="button" id="btnDel_' + nurseId + '" value="Delete" class="btn btn-link" onclick="setDelete($(this).closest(\'tr\'));" />');
                 enableNew();
             }
         }
