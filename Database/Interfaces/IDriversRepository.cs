@@ -10,7 +10,7 @@ namespace Appointments.Database.Interfaces
     {
         public bool DeleteDriver(int id, out string sMsg);
         public bool SaveDriver(DriversDto driver, bool isNew, out string sMsg);
-        public List<DriversDto> LoadDrivers(out string sMsg);
+        public List<DriversDto> LoadDrivers(int iActive, out string sMsg);
         public DriversDto GetDriverById(int id, out string sMsg);
     }
 }

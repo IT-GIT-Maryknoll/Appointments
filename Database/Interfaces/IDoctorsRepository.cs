@@ -12,7 +12,7 @@ namespace Appointments.Database.Interfaces
         public bool DeleteDoctor(int id, out string sMsg);
         public bool SaveDoctor(DoctorsDto doctor, out string sMsg);
         //private void SaveDoctorLocation(LocationDto location, out string locationMsg);
-        public List<DoctorsDto> LoadDoctors(bool bActive, out string sMsg);
+        public List<DoctorsDto> LoadDoctors(int iActive, out string sMsg);
         public List<LocationDto> GetDoctorLocations(int id, out string sMsg);
         public LocationDto GetLocationById(int id, out string sMsg);
         public DoctorsDto GetDoctorById(int id, out string sMsg);

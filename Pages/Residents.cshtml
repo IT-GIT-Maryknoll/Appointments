@@ -1,6 +1,11 @@
 ﻿@page
 @model Appointments.Pages.ResidentsModel
 @{
+    ViewData["Title"] = "Residents";
+    bool bAdd = Model.sMask != null && Model.sMask.IndexOf("A") >= 0;
+    bool bEdit = Model.sMask != null && Model.sMask.IndexOf("E") >= 0;
+    bool bDelete = Model.sMask != null && Model.sMask.IndexOf("D") >= 0;
+    var sCaption = bEdit ? "Edit" : "Details";
 }
 <body>
     <main style="height:stretch">
@@ -24,7 +29,14 @@
                         @foreach (var resident in Model.lstResidents)
                         {
                             <tr style="text-align:left;">
-                                <td><input type="button" id="btnEdit_@resident.ID" value="Edit" class="btn btn-link" onclick="setEdit(@resident.ID);" /></td>
+                                @if (bEdit)
+                                {
+                                    <td><input type="button" id="btnEdit_@resident.ID" value="Edit" class="btn btn-link" onclick="setEdit(@resident.ID);" /></td>
+                                }
+                                else
+                                {
+                                    <td></td>
+                                }
                                 <td>@resident.Perm</td>
                                 <td>@resident.Res_Title</td>
                                 <td>@resident.Name</td>
@@ -145,7 +157,7 @@
 
 <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js" defer></script>
 <script src="https://cdn.datatables.net/2.1.8/js/dataTables.js" defer></script>
-<script src="https://cdn.datatables.net/2.1.8/js/dataTables.jqueryui.js" defer></script>
+@* <script src="https://cdn.datatables.net/2.1.8/js/dataTables.jqueryui.js" defer></script> *@
 <script src="https://cdn.datatables.net/buttons/3.2.0/js/dataTables.buttons.js" defer></script>
 <script src="https://cdn.datatables.net/buttons/3.2.0/js/buttons.jqueryui.js" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" defer></script>
@@ -173,7 +185,7 @@
             order: [[1, 'asc']],
             destroy: true,
             "sPaginationType": "full_numbers",
-            scrollY: gridHeight(),   //'550px',
+            scrollY:'400px',
              // contentHeight: 
             "iDisplayLength": 100,
            columnDefs: [

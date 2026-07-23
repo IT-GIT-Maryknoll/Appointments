@@ -32,10 +32,12 @@ body {
 
 /*------------*/
 html {
-    font-size: 12px;
+    font-size: 14px;
     font-family: Arial, Helvetica, sans-serif; /* 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;*/
 }
-
+a {
+    font-size: 16px;
+}
 .border-top {
     border-top: 1px solid #e5e5e5;
 }
@@ -72,7 +74,7 @@ body {
     white-space: nowrap;
     line-height: 60px;  /* Vertically center the text there */
 } 
-.nav-link {
+/*.nav-link {
     font-family: 'Montserrat',Helvetica,Arial,Lucida,sans-serif;
     font-weight: 600;
     font-size: 13.44px !important;
@@ -80,7 +82,7 @@ body {
     letter-spacing: 0.2px;
     line-height: 1.4em;
     font-weight: bold;
-}
+}*/
 
 .dropdown-item1 {
     font-size: 13.44px !important;
@@ -121,7 +123,7 @@ body {
 main {
     flex: 1; /* Push footer to bottom */
     padding: 20px;
-    background: #f4f4f4;
+    /*background: #f4f4f4;*/
 }
 .above-footer {
     background: #ffcc00;

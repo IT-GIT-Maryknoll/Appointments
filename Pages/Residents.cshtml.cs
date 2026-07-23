@@ -15,81 +15,28 @@ using System.Text.Json;
 
 namespace Appointments.Pages
 {
-    public class ResidentsModel : PageModel
+    public class ResidentsModel (ILogger<ResidentsModel> logger, IConfiguration configuration, IResidentsRepository residentsData, IPermissionsRepository permissionsRepository): 
+        BasePageModel(logger, configuration, permissionsRepository)
     {
-        private readonly ILogger<ResidentsModel> _logger;
-        private readonly IConfiguration _configuration;
-        private readonly IResidentsRepository _residentsData;
+        private readonly ILogger<ResidentsModel> _logger = logger;
+        private readonly IConfiguration _configuration = configuration;
+        private readonly IResidentsRepository _residentsData = residentsData;
 
-        public required UserDto UserInfo;
         public List<StatusDto> lstStatuses = new List<StatusDto>();
         public List<ResidentsDto> lstResidents = new List<ResidentsDto>();
         public List<string> lstCountries = new List<string>();
-
-        public ResidentsModel(ILogger<ResidentsModel> logger, IConfiguration configuration, IResidentsRepository residentsData)
-        {
-            _logger = logger;
-            _configuration = configuration;
-            _residentsData = residentsData;
-        }
+        public string sMask = "";
 
         public void OnGet()
         {
-            string sMsg = "";
+            OnGetBase();
+            //string sMsg = "";
 
-            UserInfo = GetUserInfo(GetUserName());
+            //UserInfo = GetUserInfo(GetUserName());
+            sMask = ViewData["ResidentsAccessMask"]?.ToString() ?? "";
             lstResidents = _residentsData.LoadResidents(out sMsg);
             lstStatuses = _residentsData.LoadStatuses(out sMsg);
             lstCountries = _residentsData.LoadCountries(out sMsg);
-        }
-        private string GetUserName()
-        {
-            if (HttpContext == null) return null;
-
-            var userName = HttpContext.User.Identity.Name;
-            string sUserConfig = _configuration.GetValue<string>("UName");
-            if (sUserConfig != null && sUserConfig.Trim().Length > 0) userName = sUserConfig;
-            if (string.IsNullOrEmpty(userName) || userName.Length < 0)
-            {
-                return "";
-            }
-            else
-            {
-                var arrName = userName.Split("\\");
-                return arrName[1];
-            }
-        }
-        public UserDto GetUserInfo(string sUser)
-        {
-            if (UserInfo is object) return UserInfo;
-            using (var context = new PrincipalContext(ContextType.Domain))
-            {
-                var userPrincipal = UserPrincipal.FindByIdentity(context, IdentityType.SamAccountName, sUser);
-                if (userPrincipal != null)
-                {
-                    DirectoryEntry? directoryEntry = userPrincipal.GetUnderlyingObject() as DirectoryEntry;
-                    UserDto oRet = new UserDto();
-                    oRet.sAMAccountName = sUser;
-                    oRet.FirstName = userPrincipal.GivenName;
-                    oRet.MI = userPrincipal.MiddleName;
-                    oRet.LastName = userPrincipal.Surname;
-                    oRet.DisplayName = userPrincipal.DisplayName;
-                    oRet.MbrEmpIndicator = directoryEntry.Properties["company"].Value == null ? "" : directoryEntry.Properties["company"].Value.ToString();
-                    oRet.MbrEmpNumber = userPrincipal.EmployeeId;
-                    if (oRet.MbrEmpNumber == null) oRet.MbrEmpNumber = (directoryEntry.Properties["title"].Value == null ? "" : directoryEntry.Properties["title"].Value.ToString());
-                    oRet.EmailAddress = userPrincipal.EmailAddress;
-                    oRet.ADSDescription = userPrincipal.Description;
-                    oRet.msExchHideFromAddressLists = (directoryEntry.Properties["msExchHideFromAddressLists"].Value == null ? false : directoryEntry.Properties["msExchHideFromAddressLists"].Value.ToString().ToLower().Equals("true"));
-                    if (oRet.msExchHideFromAddressLists) oRet.EmailAddress = "";
-                    //oRet.IsAdmin = _voteList.IsUserAdmin(sUser);
-                    //if (!oRet.IsAdmin) oRet.IsRegional = _voteList.IsUserRegional(sUser);
-                    //if (oRet.IsRegional) oRet.Regions = _voteList.GetRegions(sUser);
-
-                    UserInfo = oRet;
-                    return oRet;
-                }
-            }
-            return null;
         }
         public JsonResult OnGetGetResidentById(int id)
         {
@@ -182,7 +129,6 @@ namespace Appointments.Pages
             else TempData["Message"] += sMsg;
             sMsg = "";
             return new JsonResult(bRet);
-            //return new OkResult();
         }
         public bool SaveAudit(string uID, string ip, string tblName, string action, string description)
         {
@@ -217,6 +163,5 @@ namespace Appointments.Pages
             }
             return "";
         }
-
     }
 }
