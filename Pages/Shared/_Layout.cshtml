@@ -23,11 +23,11 @@
 <body>
     <style>
         .dropdown-item {
-            font-size: 13.44px !important;
-            color: #17264A !important;
-            letter-spacing: 0.2px;
-            line-height: 1.4em;
-            font-family: 'Montserrat',Helvetica,Arial,Lucida,sans-serif;
+        font-size: 13.44px !important;
+        color: #17264A !important;
+        letter-spacing: 0.2px;
+        line-height: 1.4em;
+        font-family: 'Montserrat',Helvetica,Arial,Lucida,sans-serif;
         }
 
         .dropdown-menu {
@@ -36,39 +36,45 @@
         }
 
         .dropdown-item:active {
-            background-color: #e9ecef !important;
+        background-color: #e9ecef !important;
         }
 
         .footer {
-            position:fixed;
-            bottom: 0;
-            height: 64px;
-            text-align: center;
-            background-color: #336699;
-            font-size: 12px;
-            line-height: 200%;
-            color: white;
-           /* margin-top: 300px;*/
+        position: fixed;
+        bottom: 0;
+        height: 64px;
+        text-align: center;
+        background-color: #336699;
+        font-size: 12px;
+        line-height: 200%;
+        color: white;
+        /* margin-top: 300px;*/
         }
+
         .fntsize {
             font-size: 18px;
             color: black;
         }
+
         td {
-            font-size: 16px;
+        font-size: 16px;
         }
+
         input[type="text"] {
-            font-size: 16px;
+        font-size: 16px;
         }
+
         select {
-            font-size: 16px;
+        font-size: 16px;
         }
+
         a {
-            font-size: 16px;
+        font-size: 16px;
         }
+
         input[type=checkbox] {
-            width: 20px;
-            height: 20px;
+        width: 20px;
+        height: 20px;
         }
 
         .dropdown .dropdown-menu {
@@ -137,8 +143,10 @@
                                     </li>
                                 </ul>
                             </li>
-                        }
-                    </ul>
+                            <li class="nav-item">
+                            <a class="nav-link" href="#" onclick="navigateScreen('AppointmentDetails');"><div class="fntsize">Driver&Appt</div></a>
+                            </li>
+                        </ul>
                 </div>
             </div>
 
@@ -180,32 +188,6 @@
                                 { <div id="msg">&nbsp;</div>}
                             </td>
                             <td style="white-space:nowrap; background-color: #EEE1D1; text-align: right; padding-right: 10px; color:chocolate; font-weight:bold;">
-
-                                <script LANGUAGE="JavaScript">
-                                    <!--    Begin
-                                            var months = new Array(13);
-                                            months[1] = "January";
-                                            months[2] = "February";
-                                            months[3] = "March";
-                                            months[4] = "April";
-                                            months[5] = "May";
-                                            months[6] = "June";
-                                            months[7] = "July";
-                                            months[8] = "August";
-                                            months[9] = "September";
-                                            months[10] = "October";
-                                            months[11] = "November";
-                                            months[12] = "December";
-                                            var time = new Date();
-                                            var lmonth = months[time.getMonth() + 1];
-                                            var date = time.getDate();
-                                            var year = time.getYear();
-                                            if (year < 2000)    // Y2K Fix, Isaac Powell
-                                                year = year + 1900; // http://onyx.idbsu.edu/~ipowell
-                                            document.write( lmonth + " ");
-                                            document.write(date + ", " + year + " ");
-                                            // End -->
-                                </script>
                             </td>
                         </tr>
                     </table>
@@ -236,7 +218,7 @@
     </footer>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script> 
     <script src="~/js/site.js" asp-append-version="true"></script>
 
     @await RenderSectionAsync("Scripts", required: false);
