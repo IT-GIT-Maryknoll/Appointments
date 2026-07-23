@@ -4,15 +4,13 @@
     ViewData["Title"] = "Appointments";
 }
 
-@* @model CAP.DataBase.Entities.Event *@
 @using Microsoft.AspNetCore.Http
-@* @inject IHttpContextAccessor HttpContextAccessor *@
 @{
     ViewBag.Title = "Calendar";
-    var s = "";
-    // var userObj = HttpContextAccessor.HttpContext.Session.GetObjectFromJson<EmployeeDetails>("EmployeeDetails");
-    // if (userObj != null && userObj.IsAdmin) { s = "admin"; }
-    // else if (userObj != null && userObj.IsReadOnly) { s = "readonly"; }
+    bool bAdd = Model.sMask != null && Model.sMask.IndexOf("A") >= 0;
+    bool bEdit = Model.sMask != null && Model.sMask.IndexOf("E") >= 0;
+    bool bDelete = Model.sMask != null && Model.sMask.IndexOf("D") >= 0;
+    bool bView = Model.sMask != null && Model.sMask.IndexOf("V") >= 0;
 }
 @* <style>
     body {
@@ -42,7 +40,25 @@
         padding: 15px;
     }
 </style> *@
+@if (!bView)
+{
+    bool bHasAccess = false;
+    foreach (var sTab in Model.lstTables)
+    {
+        var sMask = ViewData[sTab + "AccessMask"]?.ToString() ?? "";
+        if(sMask != null && sMask.Length > 0) {
+            bHasAccess = true;
+            Response.Redirect("/" + sTab); 
+            break;
+        }
+    }
+     if(!bHasAccess)
+     {
+         Response.Redirect("/NoPermission");
+     }
+}
 <body>
+    i
 <main style="height:stretch; background-color:transparent;">
 <h3 style="text-align: center; vertical-align:top; font-size: 25px" id="hder">Appointments Calendar</h3>
 <form id="frm" name="frm" method="post">
@@ -149,15 +165,15 @@
                         </tr>
                         <tr id="trDateTime">
                             <td class="form-label" style="padding:10px;">Date:</td>
-                            <td style="padding:10px; align-content:flex-start;"><input type="date" id="txtMDate" name="txtMDate" class="form-control-lg" /></td>
+                                    <td style="padding:10px; align-content:flex-start;"><input type="date" id="txtMDate" name="txtMDate" @(!bEdit ? "readonly" : "") class="form-control-lg" /></td>
                             <td style="padding:10px;">Time:</td>
-                            <td style="padding:10px; align-content:flex-start;"><input type="time" id="txtMTime" name="txtMTime" step="1800" class="form-contro-lg" /></td>
+                                    <td style="padding:10px; align-content:flex-start;"><input type="time" id="txtMTime" name="txtMTime" step="1800" @(!bEdit ? "readonly" : "") class="form-contro-lg" /></td>
                          </tr>
                         <tr id="trReoccurring" style="display:none;">
                             <td class="form-label" style="padding:10px;">Start Date:</td>
-                            <td style="padding:10px; align-content:flex-start;"><input type="date" id="txtMStartDate" name="txtMStartDate" class="form-control-lg" /></td>
+                                    <td style="padding:10px; align-content:flex-start;"><input type="date" id="txtMStartDate" name="txtMStartDate" @(!bEdit ? "readonly" : "") class="form-control-lg" /></td>
                             <td style="padding:10px;">End Date:</td>
-                            <td style="padding:10px; align-content:flex-start;"><input type="date" id="txtMEndDate" name="txtMEndDate" class="form-control-lg" /></td>
+                            <td style="padding:10px; align-content:flex-start;"><input type="date" id="txtMEndDate" name="txtMEndDate" @(!bEdit ? "readonly" : "") class="form-control-lg" /></td>
                         </tr>
                             <tr id="trWeekdays" style="display:none;">
                                 <td colspan="4">
@@ -179,7 +195,7 @@
                             <td style="padding:10px;">Resident:</td>
                             <td style="padding:10px; align-content:flex-start;">
                                 <input type="hidden" id="hdnMRes" name="hdnMRes" value="" />
-                                <input type="text" id="txtMRes" list="dlMRes" name="txtRes" class="form-control-lg" onchange="ChangeFilter(this);" />
+                                <input type="text" id="txtMRes" list="dlMRes" name="txtRes" @(!bEdit ? "readonly" : "") class="form-control-lg" onchange="ChangeFilter(this);" />
                                 <datalist id="dlMRes" name="lblMRes">
                                     @foreach (var res in Model.lstResidents)
                                     {
@@ -189,7 +205,7 @@
                             </td>
                             <td style="padding:10px;">Status:</td>
                             <td style="padding:10px; align-content:flex-start;">
-                                <select id="cmbMStatus" name="cmbMStatus" class="form-control-lg">
+                                <select id="cmbMStatus" name="cmbMStatus" class="form-control-lg" @(!bEdit ? "disabled" : "")>
                                     <option value="Booked" label="Booked" />
                                     <option value="Cancelled" label="Cancelled" />
                                 </select>
@@ -199,7 +215,7 @@
                             <td style="padding:10px; ">Doctor:</td>
                             <td style="padding:10px; align-content:flex-start;">
                                 <input type="hidden" id="hdnMDoc" name="hdnMDoc" value=""  />
-                                <input type="text" id="txtMDoc" name="txtMDoc" list="dlMDoc" class="form-control-lg" onchange="ChangeFilter(this); changeDoctor($('#hdnMDoc').val());" />
+                                <input type="text" id="txtMDoc" name="txtMDoc" list="dlMDoc" class="form-control-lg" @(!bEdit ? "readonly" : "")   onchange="ChangeFilter(this); changeDoctor($('#hdnMDoc').val());" />
                                 <datalist id="dlMDoc" name="lblMDoc">
                                     @foreach (var res in Model.lstDoctors)
                                     {
@@ -213,7 +229,7 @@
                         <tr>
                             <td style="padding:10px;">Address:</td>
                             <td style="padding:10px; align-content:flex-start;">
-                                <select id="cmbMAddr" name="cmbMAddr" class="form-control-lg" onchange="changeLocation(this.value);"></select>
+                                <select id="cmbMAddr" name="cmbMAddr" class="form-control-lg" @(!bEdit ? "disabled" : "") onchange="changeLocation(this.value);"></select>
                             </td>
                             <td style="padding:10px; ">City:</td>
                             <td style="padding:10px; align-content:flex-start;"><label id="lblMCity" name="lblMCity" class="form-control-lg" /></td>
@@ -228,7 +244,7 @@
                             <td style="padding:10px;">Driver:</td>
                             <td>
                                 <input type="hidden" id="hdnMDriver" name="hdnMDriver" value="" />
-                                                    <input type="text" id="txtMDriver" name="txtMDriver" list="dlMDriver" class="form-control-lg" style="width: 150px;" onchange="ChangeFilter(this);" />
+                                                    <input type="text" id="txtMDriver" name="txtMDriver" list="dlMDriver" class="form-control-lg" style="width: 150px;" @(!bEdit ? "readonly" : "") onchange="ChangeFilter(this);" />
                                 <datalist id="dlMDriver" name="lblMDriver">
                                     @foreach (var res in Model.lstDrivers)
                                     {
@@ -238,7 +254,7 @@
                             </td>
                                 <td style="padding:10px;">Car:</td>
                                     <td style="padding:10px; align-content:flex-start;">
-                                        <select id="cmbMCar" name="cmbMCar" class="form-control-lg">
+                                        <select id="cmbMCar" name="cmbMCar" @(!bEdit ? "disabled" : "") class="form-control-lg">
                                             <option value="">Please Select</option>
                                             @foreach (var res in Model.lstCars)
                                             {
@@ -249,27 +265,27 @@
                             </tr><tr>@* <td></td><td></td> *@
                                 <td colspan="2"><table><tr>
                                                 <td>Make Appointment</td>
-                                                <td style="padding-left: 5px;"><input type="checkbox" id="chkMakeAppointment" name="chkMakeAppointment" /></td>
+                                                <td style="padding-left: 5px;"><input type="checkbox" id="chkMakeAppointment" @(bEdit ? "" : "disabled") name="chkMakeAppointment" /></td>
                                                 <td style="padding-left: 25px;">Nurse's Aid</td>
-                                                <td style="padding-left: 5px;"><input type="checkbox" id="chkNursesAideAccompaniment" name="chkNursesAideAccompaniment" /></td>
+                                                <td style="padding-left: 5px;"><input type="checkbox" id="chkNursesAideAccompaniment" @(bEdit ? "" : "disabled") name="chkNursesAideAccompaniment" /></td>
                                             </tr>
                                             <tr>
                                                 <td>Appointment Confirmed</td>
-                                                <td style="padding-left: 5px;"><input type="checkbox" id="chkConfirmedAppointment" name="chkConfirmedAppointment" /></td>
+                                                <td style="padding-left: 5px;"><input type="checkbox" id="chkConfirmedAppointment" @(bEdit ? "" : "disabled") name="chkConfirmedAppointment" /></td>
                                                 <td style="padding-left: 25px;">Wait</td>
-                                                <td style="padding-left: 5px;"><input type="checkbox" id="chkWait" name="chkWait" /></td>
+                                                <td style="padding-left: 5px;"><input type="checkbox" id="chkWait" @(bEdit ? "" : "disabled") name="chkWait" /></td>
                                             </tr>
-                                            <tr><td>In House</td><td style="padding-left: 5px;"><input type="checkbox" id="chkInHouseVisit" name="chkInHouseVisit" /></td><td></td><td></td></tr>
+                                            <tr><td>In House</td><td style="padding-left: 5px;"><input type="checkbox" id="chkInHouseVisit" @(bEdit ? "" : "disabled") name="chkInHouseVisit" /></td><td></td><td></td></tr>
                                         </table>
                                  </td>
                             <td style="padding:10px;">Pick up:</td>
-                            <td style="padding:10px; align-content:flex-start;"><input type="time" id="txtMPickup" name="txtPickup" step="1800" class="form-control-lg" /></td>
+                            <td style="padding:10px; align-content:flex-start;"><input type="time" id="txtMPickup" name="txtPickup" step="1800" @(bEdit ? "" : "disabled") class="form-control-lg" /></td>
                         </tr>
                         <tr><td colspan="4">&nbsp;</td></tr>
                         <tr>
                             <td><label id="lblMPrep">Prep:</label></td>
                             <td>
-                                <select id="cmbMPrep" name="cmbMPrep" class="form-control-lg">
+                                <select id="cmbMPrep" name="cmbMPrep" class="form-control-lg" @(bEdit ? "" : "disabled")>
                                     <option value="">Please Select</option>
                                     @foreach (var res in Model.lstPreps )
                                     {
@@ -279,7 +295,7 @@
                             </td>
                             <td><label id="lblMApptType">Appt Type:</label></td>
                             <td>
-                                <select id="cmbMApptType" name="cmbMApptType" class="form-control-lg">
+                                <select id="cmbMApptType" name="cmbMApptType" class="form-control-lg" @(bEdit ? "" : "disabled")>
                                     <option value="">Please Select</option>
                                     @foreach (var res in Model.lstAppointmentTypes)
                                     {
@@ -297,7 +313,7 @@
                         </tr>
                         <tr>
                             <td><label id="lblMNotes">Notes:</label></td>
-                            <td colspan="3"><textarea id="txtMNotes" name="txtMNotes" class="form-control-lg" rows="3" style="width:100%;"></textarea></td>
+                            <td colspan="3"><textarea id="txtMNotes" name="txtMNotes" class="form-control-lg" rows="3" style="width:100%;" @(bEdit ? "" : "disabled")></textarea></td>
                         </tr>
                     </table>
                     
@@ -311,9 +327,15 @@
                             </td>
                             <td>
                                 <div class="modal-static">
-                                    <button type="button" id="btnSave" class="btn btn-primary" onclick="if(saveAppointment()) clearForm();">Save</button>
-                                    <button type="button" id="cmdDelete" name="cmdDelete" class="btn btn-primary" data-bs-dismiss="modal" onclick="deleteAppointment(); clearForm();">Delete</button>
-                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="clearForm();">Close</button>
+@*                                 @if (bEdit)
+                                {
+ *@                                        <button type="button" id="btnSave" class="btn btn-primary" @(!bEdit ? "disabled" : "") onclick="if(saveAppointment()) clearForm();">Save</button>
+@*                                 }
+  *@                                @if(bDelete)
+                                {
+                                       <button type="button" id="cmdDelete" name="cmdDelete" class="btn btn-primary" data-bs-dismiss="modal" onclick="deleteAppointment(); clearForm();">Delete</button>
+                                }
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="clearForm();">Close</button>
                                 </div>
                             </td>
                         </tr>
@@ -356,12 +378,14 @@
     
     <script>
         var appts = []; var strDate = '';
+            var bEditPage = @bEdit.ToString().ToLower();
+
         $(document).ready(function () {
 
-        $('#myModal').modal({
-        backdrop: 'static',
-        keyboard: false
-        });
+            $('#myModal').modal({
+            backdrop: 'static',
+            keyboard: false
+            });
             let date = new Date();
             let month = date.getMonth() + 1;
             let year = date.getFullYear();
@@ -423,7 +447,7 @@
                 $('#calendar').fullCalendar('destroy');
                 $('#calendar').fullCalendar({
                     contentHeight: gridHeight(),  //600,
-                    contentWidth: gridWidth(),   //1630,
+                    // contentWidth: gridWidth(),   //1630,
                     defaultDate: date,
                     timeFormat: 'h(:mm)a',
                     displayEventTime: false,
@@ -486,7 +510,7 @@
                              url: "index?handler=GetAppointmentById&id=" + calEvent.eventID,
                              data: { id: calEvent.eventID },
                                   success: function (eventData) {
-                                       document.getElementById('cmbMAddr').options.length = 0;
+                                      document.getElementById('cmbMAddr').options.length = 0;
                                        for(i= 0; i < eventData.locations.length; i++) {
                                             $('#cmbMAddr').append($('<option>', {
                                                  value: eventData.locations[i].locationID,
@@ -559,7 +583,12 @@
                     editable: true,
 
                     dayClick: function (date, jsEvent, view) {
-                           document.getElementById("msg").innerHTML = "";
+                        var bAdd = @bAdd.ToString().ToLower(); 
+                        if(!bAdd) return false;  //no permission
+                           bEditPage = true;
+                         
+                           $('#hdnEventID').val("");
+                        document.getElementById("msg").innerHTML = "";
                         //let date = $('#calendar').fullCalendar('getDate');
                            $('#txtMDate').val(new Date(date).toISOString().substring(0, 10));
                            //$('#txtMTime').val(new Date().toTimeString().substring(0, 5));
@@ -570,6 +599,20 @@
                            $('#myModal').modal('show');
                         // $('#messagePastDate').hide();
                         // $('#dtpChurchDate').val(date.format());
+      var inputs = document.getElementsByTagName('input');
+        for (var i = 0; i < inputs.length; i++) {
+              inputs[i].removeAttribute('readonly'); inputs[i].removeAttribute('disabled');
+        }
+                  var inputs = document.getElementsByTagName('select');
+            for (var i = 0; i < inputs.length; i++) {
+                  inputs[i].removeAttribute('readonly'); inputs[i].removeAttribute('disabled');
+            }
+                      var inputs = document.getElementsByTagName('textarea');
+            for (var i = 0; i < inputs.length; i++) {
+                  inputs[i].removeAttribute('readonly'); inputs[i].removeAttribute('disabled');
+            }
+                $("#btnSave").attr('disabled', false);
+
                     }
                 });
             }
@@ -799,14 +842,14 @@
                 });
           }
     }
-    function gridHeight() {
-            var iRet = screen.availHeight; 
-                    iRet = iRet - document.getElementById('appHeader').offsetHeight; 
-                    iRet = iRet - document.getElementById('appFooter').offsetHeight; 
-                    iRet = iRet - document.getElementById('hder').offsetHeight; 
-            return iRet - 300; // screen.availHeight - document.getElementById('appHeader').offsetHeight - document.getElementById('appFooter').offsetHeight - 100;
-    }
-    function gridWidth() { return screen.availWidth - 100; }
+    // function gridHeight() {
+    //         var iRet = screen.availHeight; 
+    //                 iRet = iRet - document.getElementById('appHeader').offsetHeight; 
+    //                 iRet = iRet - document.getElementById('appFooter').offsetHeight; 
+    //                 iRet = iRet - document.getElementById('hder').offsetHeight; 
+    //         return iRet - 300; // screen.availHeight - document.getElementById('appHeader').offsetHeight - document.getElementById('appFooter').offsetHeight - 100;
+    // }
+    // function gridWidth() { return screen.availWidth - 100; }
     function ToggleReccuring(isChecked) {
         if (isChecked) {
                 document.getElementById('trReoccurring').style.display = 'table-row';

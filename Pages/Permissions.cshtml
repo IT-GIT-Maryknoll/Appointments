@@ -1,0 +1,383 @@
+﻿@page
+@model Appointments.Pages.PermissionsModel
+@{
+}
+@* <style type="text/css">
+    .filterBar {
+        background-color: #D1DCEB;
+        vertical-align: middle;
+        text-align: right;
+        padding: 9px;
+        width: 99%;
+        height: 50px;
+    }
+
+    tr:nth-child(even) {
+        background-color: #E6E6E6;
+    }
+
+    .sticky-top-sub {
+        position: -webkit-sticky;
+        position: sticky;
+        top: 0;
+        z-index: 2;
+    }
+
+    .wrapper {
+        position: relative;
+        overflow-y: auto;
+        z-index: 1;
+        content: '';
+    }
+
+    .nav-item {
+        color: #666666;
+        background-color: #9BB7D4;
+        text-decoration: none;
+        font-weight: bold;
+        /*font-size: 12px;*/
+        border: solid grey 1pt;
+    }
+
+    .a {
+        color: #666666;
+    }
+
+    .nav-tabs .nav-item.active,
+    .nav-tabs .nav-item.show .nav-link {
+        color: white;
+        background-color: #D1DCEB;
+        text-decoration: none;
+        font-weight: bold;
+        font-size: 20px;
+    }
+
+    .fix-div {
+        background-color: white;
+        position: fixed;
+        height: auto;
+        width: 100%;
+        left: 0;
+        top: 0;
+        z-index: 1;
+    }
+
+    .filterDiv {
+        width: 100%;
+    }
+</style> *@
+<style type="text/css">
+    .lit {
+        color: red;
+        font-size: x-large;
+    }
+
+    .filterBar {
+        background-color: white; /*#D1DCEB; */
+        vertical-align: middle;
+        text-align: right;
+        padding: 9px;
+        /* width: 99%; */
+        height: 50px;
+    }
+
+    .btn {
+        background-color: #0073F9;
+        color: white;
+        border: none;
+        padding: 5px 10px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 12px;
+        margin: 4px 2px;
+        cursor: pointer;
+    }
+
+        .btn:hover {
+            background-color: #0073F9;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            /*      font-size: 16px; */
+            margin: 4px 2px;
+            cursor: pointer;
+        }
+
+
+    tr:nth-child(even) {
+        background-color: #E6E6E6;
+    }
+
+    .sticky-top-sub {
+        position: -webkit-sticky;
+        position: sticky;
+        top: 0;
+        z-index: 2;
+    }
+
+    .wrapper {
+        position: relative;
+        overflow-y: auto;
+        z-index: 1;
+        content: '';
+    }
+
+    .nav-items {
+        color: white; /*#666666;*/
+        background-color: floralwhite; /* #9BB7D4; */
+        text-decoration: none;
+        font-weight: bold;
+        /*         font-size: 18px;
+            border: solid white 1pt; */
+        cursor: pointer;
+        padding: 4px;
+    }
+
+    .nav-links {
+        display: block;
+        width: 100%;
+        text-decoration: none;
+    }
+
+        .nav-links:hover {
+            background-color: lightslategray;
+            text-decoration: none;
+            font-weight: bold;
+            color: white;
+            /* font-size: 20px; */
+            /* color: red; */
+        }
+
+    .nav-items.active {
+        background-color: #D1DCEB;
+        font-weight: bold;
+        /* width: 100%; */
+        color: royalblue;
+        padding: 4px;
+        white-space: nowrap;
+    }
+
+    .nav-items .nav-links.active {
+        background-color: #D1DCEB;
+        width: 100%;
+        color: blue;
+        padding: 4px;
+    }
+
+    a {
+        color: #666666;
+    }
+
+    /*     .nav-tabs .nav-item.active,
+        .nav-tabs .nav-item.show .nav-link {
+            background-color: #D1DCEB;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 20px;
+            color: red;
+        } */
+
+    .fix-div {
+        background-color: white;
+        position: fixed;
+        height: auto;
+        width: 100%;
+        left: 0;
+        top: 0;
+        z-index: 1;
+    }
+
+    .filterDiv {
+        width: 100%;
+    }
+
+</style>
+<body>
+    <main>
+        <div id="divSecurity" class="row filterDiv" style="position:absolute;">
+@*             <div class="col-lg-12 col-md-12 col-sm-12 col-xl-12" style="background-color:white;">
+                <div class="col-lg-12 col-md-12 col-sm-12 col-xl-12" style="background-color:white;vertical-align:top">
+                    <table class="filterBar" style="width:100%">
+                        <tr>
+                            <td>
+                                <table class="filterBar" style="width:100%">
+
+                                </table>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <br />
+                <br /> *@
+
+                <input type="hidden" id="txtGroupID" />
+                <div class="col-lg-12 col-md-12 col-sm-12 col-xl-12" style="background-color:white;vertical-align:top">
+                    <table id="id_tableusergroups" class="table-borderless" style="width:90%; background-color:white;">
+                        <tbody>
+                            <tr><td colspan="6" align="center"><h3 style="text-align: center; vertical-align:top; font-size: 25px">Group Permissions</h3></td></tr>
+                            <tr>
+                            <td style="font-size:18px; font-weight:bold; text-align:left; background-color:white;">Groups</td>
+                                <td style="text-align:right; background-color:white;" >
+                                    <input type="submit" class="btn btn-primary" id="btnSavePerm"
+                                       onclick="SavePermissions($('#txtGroupID').val());" value="Save" />&nbsp;&nbsp;
+                                    <input type="button" class="btn btn-primary" id="btnResetPerm"
+                                       onclick="GroupPermissionClick($('#txtGroupID').val());" value="Reset" />&nbsp;&nbsp;
+                                </td>
+                            </tr>
+                            <tr style="background-color:white;">
+                                <td style="width: 10%; vertical-align:top;">
+                                    <div class="sticky-top" style="background-color: white; padding-right: 10px;">
+                                        <table class="filterBar" style="width: 100%;">
+                                        <tr>
+                                            <td style="background-color:transparent;">
+                                                <div id="groupList" name="groupList">
+                                                    <ul id="lstGroups" class="nav nav-tabs flex-column">
+
+                                                            @foreach (var group in Model.lstGroups)
+                                                            {
+                                                                <li id="lstGroupPerm_@group.GroupID" class="nav-items" >
+                                                                <a id="grp_@group.GroupID" class="nav-links" data-toggle="tab" onclick="GroupItemClick(@group.GroupID);">@group.Label</a>
+                                                                </li>
+                                                            }
+                                                    </ul>
+                                                </div>
+                                            </td>
+
+                                        </tr>
+                                    </table>
+                                 </div>
+                         </td>
+
+                        <td style="width: 85%" id="tdPermissions">
+                            <div id="divPermissions" style="height: 600px; overflow-y: auto; text-align:center; display:none;" role="tabpanel" aria-labelledby="divPermissions">
+                                        <table id="tblGroupPermissions" class="table table-bordered" style="width:100%; ">
+                                        <tr>
+                                            <th style="width:150px; background-color:royalblue; color:white;">Table Name</th>
+                                            <th style="background-color:royalblue; color:white;">View</th>
+                                            <th style="background-color:royalblue; color:white;">Add</th>
+                                            <th style="background-color:royalblue; color:white;">Edit</th>
+                                            <th style="background-color:royalblue; color:white;">Delete</th>
+                                            </tr>
+                                                @foreach (var table in Model.lstTables)
+                                                {
+                                                    <tr>
+                                                        <td style="text-align:left;">@table</td>
+                                                <td><input type="checkbox" name="checkPerm" id="check*V*@table" onclick="CheckColumn(this);"   /></td>
+                                                <td><input type="checkbox" name="checkPerm" id="check*A*@table" onclick="CheckColumn(this);" /></td>
+                                                <td><input type="checkbox" name="checkPerm" id="check*E*@table" onclick="CheckColumn(this);"  /></td>
+                                                <td><input type="checkbox" name="checkPerm" id="check*D*@table" onclick="CheckColumn(this);"  /></td>
+                                                    </tr>
+                                                }
+                                        </table>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+</main></body>
+<script src="~/js/site.js"></script>
+<script src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
+<link href="https://cdn.datatables.net/2.0.4/css/dataTables.dataTables.css" rel="stylesheet" type="text/css" />
+<script src="https://cdn.datatables.net/2.0.4/js/dataTables.min.js" defer></script>
+
+
+<script type="text/javascript">
+    function GroupItemClick(GroupID) {
+        //try { GroupCancelClick(); } catch (e) { }
+        $("#txtGroupID").val(GroupID);
+        // document.getElementById('lstNewGroup').setAttribute('liID', GroupID);
+        // loadGroupMembers(GroupID);
+        // loadNonMembers(GroupID);
+        // document.getElementById('btnDeleteGroup').disabled = (GroupID <= 0);
+        // document.getElementById('btnEditGroup').disabled = (GroupID <= 0);
+
+        GroupPermissionClick(GroupID);
+
+        const items = document.querySelectorAll('.nav-links');
+        items.forEach(item => item.classList.remove('active'));
+        document.getElementById("grp_" + GroupID).classList.add('active');
+    }
+    
+    $(document).ready(function () {
+        //doResize('permissions');
+    });
+           function GroupPermissionClick(GroupID) {
+               $.ajax({
+                headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+                url: 'Permissions?handler=GetPermissionList&GroupID=' + GroupID,
+                type: 'GET',
+                success: function (result) {
+                    document.getElementById("divPermissions").style = "display:bock;";
+                    DisplayPermissions(result);
+                },
+                error: function (xhr, status) {
+                   document.getElementById("msg").style = "padding:0px;text-align:center;font-weight:bold;color:red;";
+                   document.getElementById("msg").innerHTML = "ERROR: " + status + ", " + xhr.statusText;
+                }
+            });
+        }
+        function SavePermissions(GroupID) {
+            var dict = {};
+            if (GroupID == 0) return;
+
+            $('input[name=checkPerm]', "#tblGroupPermissions").each(function () {
+                var chk = $(this).is(':checked');
+                var chkId = $(this).attr('id');
+                var arrId = chkId.split("*");
+
+                if (arrId.length == 3) {
+                    var perm = arrId[1]; var tbl = arrId[2];
+                    if (chk) {
+                        var chkId = $(this).attr('id');
+                        if (dict[tbl] == null) dict[tbl] = "";
+                        dict[tbl] = dict[tbl] + perm;
+                    }
+                    else {
+                        if (dict[tbl] == null) dict[tbl] = "";
+                    }
+                }
+            });
+
+            $.ajax({
+                headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+                url:  'Permissions?handler=SavePermissions&GroupID=' + GroupID + "&PermList=" + JSON.stringify(dict), 
+                type: 'GET',
+                success: function () {
+                    GroupPermissionClick(GroupID);
+                   document.getElementById("msg").style = "padding:0px;text-align:center;font-weight:bold;color:green;";
+                   document.getElementById("msg").innerHTML = "Permissions changed successfully!";
+                   // GetTempData();
+                },
+                error: function (xhr, status) {
+                   document.getElementById("msg").style = "padding:0px;text-align:center;font-weight:bold;color:red;";
+                   document.getElementById("msg").innerHTML = "ERROR: " + status + ", " + xhr.statusText;
+                 //   GetTempData();
+                }
+            });
+        }
+        function DisplayPermissions(result){
+            $('input[name=checkPerm]', "#tblGroupPermissions").prop("checked", false);
+            for (var rec in result) {
+                var perms = result[rec].accessMask; var tbl = result[rec].tableName;
+                for (var i = 0; i < perms.length; i++) {
+                    var perm = perms[i];
+                    var chkId = "check*" + perm + "*" + tbl;
+                    $("input[id='" + chkId + "']", "#tblGroupPermissions").prop("checked", true);
+                }
+            }
+        }
+        function CheckColumn(obj) {
+            var tblName = obj.id.substring(8);  // obj.id.replace('check_', '');
+            var bChecked = $("input[id$='check*A*" + tblName + "']", "#tblGroupPermissions").is(':checked') || 
+                                    $("input[id$='check*E*" + tblName + "']", "#tblGroupPermissions").is(':checked') ||
+                                    $("input[id$='check*D*" + tblName + "']", "#tblGroupPermissions").is(':checked');
+             if(bChecked) $("input[id='check*V*" + tblName + "']", "#tblGroupPermissions").prop("checked", true);
+        }
+ </script>

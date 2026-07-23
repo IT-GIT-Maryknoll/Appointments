@@ -1,8 +1,16 @@
 ﻿@page
 @model Appointments.Pages.DoctorsModel
 @{
-    bool bLoadActive = Model.bLoadActive;
-}
+    ViewData["Title"] = "Doctors";
+
+    int iLoadActive = Model.iLoadActive;
+    bool bAdd = Model.sMask != null && Model.sMask.IndexOf("A") >= 0;
+    bool bEdit = Model.sMask != null && Model.sMask.IndexOf("E") >= 0;
+    bool bDelete = Model.sMask != null && Model.sMask.IndexOf("D") >= 0;
+    var sCaption = bEdit ? "Edit" : "Details";
+    var strEdit ="<td><input type=\"button\" id=\"btnEditLoc_$ID\" value=\"Edit\" class=\"btn btn-link\" onclick=\"setEditLoc($(this).closest(\\'tr\\'), $Cn)\" />";
+    var strDelete = "<input type=\"button\" id=\"btnDelLoc_$ID\" value=\"Delete\" class=\"btn btn-link\" onclick=\"setDeleteLoc($(this).closest(\\'tr\\'));setDirty();\" /></td>" ;
+ }
 <body>
 <main style="height:stretch">
     <h3 style="text-align: center; font-size: 25px" id="hder">Doctors</h3>
@@ -20,14 +28,22 @@
                 <th>Specialty</th>
                 <th>Deleted</th>
                 @* <th style="white-space:nowrap;"><span>Active Only</span>&nbsp;<input type="checkbox" id="chkActive" @(Model.bLoadActive ? "checked" : "") onclick="location.reload();" /></th> *@
-                            <th style="white-space:nowrap;"><a style="padding-left:20px;color:yellow;" asp-page="./Doctors" asp-route-bActive=@(!bLoadActive ? "true" : "false")>@(bLoadActive ? "Load All" : "Load Active")</a></th>
+@*                             <th style="white-space:nowrap;"><a style="padding-left:20px;color:yellow;" asp-page="./Doctors" asp-route-bActive=@(!bLoadActive ? "true" : "false")>@(bLoadActive ? "Load All" : "Load Active")</a></th> *@
+                 <th style="white-space:nowrap;">
+                     <select id="cmbActive" asp-route-sActive="this.value" onchange="navigateToPage(this.value);">
+                        <option value="1" selected="@(Model.iLoadActive == 1 ? "selected" : null)">Active</option>
+                        <option value="2" selected="@(Model.iLoadActive == 2 ? "selected" : null)">Inactive</option>
+                        <option value="3" selected="@(Model.iLoadActive == 3 ? "selected" : null)">All</option>
+                     </select>
+                 </th>
             </tr>
                     </thead>
             <tbody>
+
             @foreach (var doctor in Model.lstDoctors)
             {
                 <tr style="text-align:left;">
-                    <td><input type="button" id="btnEdit_@doctor.DoctorKey" value="Edit" class="btn btn-link" onclick="setEdit(@doctor.DoctorKey);" /></td>
+                    <td><input type="button" id="btnEdit_@doctor.DoctorKey" value="@sCaption" class="btn btn-link" onclick="setEdit(@doctor.DoctorKey);" /></td>
                     <td>@doctor.Last</td>
                     <td>@doctor.First</td>
                     <td>@doctor.Company</td>
@@ -55,33 +71,39 @@
                     <table class="table table-borderless">
                         <tr>
                             <td class="col-md-2"><label for="txtLast" class="form-label">Last Name</label></td>
-                            <td class="col-md-3"><input type="text" id="txtLast" name="txtLast" class="form-control" onchange="setDirty();" /></td>
+                            <td class="col-md-3"><input type="text" id="txtLast" name="txtLast" class="form-control" @(!bEdit ? "readonly" : "") onchange="setDirty();" /></td>
                             <td class="col-md-2"><label for="txtFirst" class="form-label">First Name</label></td>
-                            <td class="col-md-3"><input type="text" id="txtFirst" name="txtFirst" class="form-control" onchange="setDirty();" /></td>
+                            <td class="col-md-3"><input type="text" id="txtFirst" name="txtFirst" class="form-control" @(!bEdit ? "readonly" : "") onchange="setDirty();" /></td>
                         </tr>
                         <tr>
                             <td><label for="txtCompany" class="form-label">Company</label></td>
-                            <td><input type="text" id="txtCompany" name="txtCompany" class="form-control" onchange="setDirty();" /></td>
+                            <td><input type="text" id="txtCompany" name="txtCompany" class="form-control" @(!bEdit ? "readonly" : "") onchange="setDirty();" /></td>
                             <td><label for="txtTitle" class="form-label">Title</label></td>
-                            <td><input type="text" id="txtTitle" name="txtTitle" class="form-control" onchange="setDirty();" /></td>
+                            <td><input type="text" id="txtTitle" name="txtTitle" class="form-control" @(!bEdit ? "readonly" : "") onchange="setDirty();" /></td>
                         </tr>
                         <tr>
                             <td><label for="txtSpecialty" class="form-label">Specialty</label></td>
-                            <td><input type="text" id="txtSpecialty" name="txtSpecialty" class="form-control" onchange="setDirty();" /></td>
+                            <td><input type="text" id="txtSpecialty" name="txtSpecialty" class="form-control" @(!bEdit ? "readonly" : "") onchange="setDirty();" /></td>
                             <td><label for="chkDeletedF" class="form-label">Deleted</label></td>
-                            <td><input type="checkbox" id="chkDeletedF" name="chkDeletedF" onchange="setDirty();" /></td>
+                            <td><input type="checkbox" id="chkDeletedF" name="chkDeletedF" @(!bEdit ? "disabled" : "") onchange="setDirty();" /></td>
 
                         </tr>
                     </table>
                     <hr/>
                             <h3 id="modalLocationTitle" class="modal-title fs-5">Locations&nbsp;&nbsp;
-                                <input type="button" id="btnAddLocation" value="Add" class="btn btn-link" onclick="setNewLoc();" />
+                                @if (bEdit)
+                                {
+                                    <input type="button" id="btnAddLocation" value="Add" class="btn btn-link" onclick="setNewLoc();" />
+                                }
                             </h3>
                     <div id="divLocations" class="form-group">
                         <table id="tblLocations" class="table table-borderless">
                             <thead>
                                 <tr style="background-color: lightgray;">
-                                    <th></th>
+                                    @if(bEdit)
+                                    {
+                                        <th></th>
+                                    }
                                     <th style="display:none;">Location Key</th>
                                     <th>Address</th>
                                     <th>City</th>
@@ -103,15 +125,21 @@
                                     Modified on:&nbsp;<label id="lblMEditDate"></label>&nbsp;&nbsp;by:&nbsp;<label id="lblMEditBy"></label><br />
                                     Created on:&nbsp;<label id="lblMCreateDate"></label>&nbsp;&nbsp;by:&nbsp;<label id="lblMCreateBy"></label>
                                 </div>
-                            </td>
+                        </td>
                             <td>
-                                <div class="modal-static">
-                                    <button type="button" id="btnSave" class="btn btn-primary" onclick="if(SaveDoctor()) { clearForm(); IsDirty = false; }">Save</button>
-                                    <button type="button" id="cmdDelete" name="cmdDelete" class="btn btn-primary" data-bs-dismiss="modal" onclick="deleteDoctor(); clearForm(); IsDirty = false;">Delete</button>
-@*                                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="if (IsDirty) {if (confirm('Save changes?')) if(SaveDoctor()) {clearForm(); IsDirty = false;} else { event.preventDefault(); return false;}} clearForm(); IsDirty = false;">Close</button>
- *@                              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="if (IsDirty && confirm('Save changes?')) { if(!SaveDoctor()) {clearForm(); IsDirty = false; return false; }} clearForm(); IsDirty = false;">Close</button>
+                            <div class="modal-static">
+                             @if (bEdit)
+                            {
+                                <button type="button" id="btnSave" class="btn btn-primary" onclick="if(SaveDoctor()) { clearForm(); IsDirty = false; }">Save</button>
+                            }
+                            @if(bDelete)
+                            {
+                                <button type="button" id="cmdDelete" name="cmdDelete" class="btn btn-primary" data-bs-dismiss="modal" onclick="deleteDoctor(); clearForm(); IsDirty = false;">Delete</button>
+                            }
+@*                       <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="if (IsDirty) {if (confirm('Save changes?')) if(SaveDoctor()) {clearForm(); IsDirty = false;} else { event.preventDefault(); return false;}} clearForm(); IsDirty = false;">Close</button>
+ *@                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="if (IsDirty && confirm('Save changes?')) { if(!SaveDoctor()) {clearForm(); IsDirty = false; return false; }} clearForm(); IsDirty = false;">Close</button>
 
-                                </div>
+                            </div>
                             </td>
                         </tr>
                     </table>
@@ -131,7 +159,7 @@
 
 <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js" defer></script>
 <script src="https://cdn.datatables.net/2.1.8/js/dataTables.js" defer></script>
-<script src="https://cdn.datatables.net/2.1.8/js/dataTables.jqueryui.js" defer></script>
+@* <script src="https://cdn.datatables.net/2.1.8/js/dataTables.jqueryui.js" defer></script> *@
 <script src="https://cdn.datatables.net/buttons/3.2.0/js/dataTables.buttons.js" defer></script>
 <script src="https://cdn.datatables.net/buttons/3.2.0/js/buttons.jqueryui.js" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" defer></script>
@@ -143,10 +171,13 @@
    var IsDirty = false;
     
    $(document).ready(function () {
-            $('#myModal').modal({
+        var bAdd = @bAdd.ToString().ToLower();
+        bAdd = (bAdd === "true");
+        
+        $('#myModal').modal({
             backdrop: 'static',
             keyboard: false
-            });
+         });
 
         var arr = [
                         { extend: 'copy', className: 'btn btn-primary' },
@@ -156,20 +187,21 @@
                         { extend: 'print', className: 'btn btn-primary' }
                     ];
 
-            arr.unshift({ extends: 'button', className: 'btn btn-primary', id: 'btnNewChoice', text: 'Add New', action: function () { setRowChoiceNew(); }});
-        // }
-        $('#tblDoctors').dataTable({
+            if (bAdd) {
+                arr.unshift({ extends: 'button', className: 'btn btn-primary', id: 'btnNewChoice', text: 'Add New', action: function () { setRowChoiceNew(); }});
+            }
+
+            
+            $('#tblDoctors').dataTable({
             order: [[1, 'asc']],
             destroy: true,
             "sPaginationType": "full_numbers",
             //contentHeight: gridHeight(), 
-           scrollY: gridHeight(),   //'550px',
+           scrollY: '400px',
             "iDisplayLength": 100,
            columnDefs: [
                 { targets: [0,6,7], searchable: false }, 
                 { targets: [0,6,7], orderable: false },
-                // { targets: [6], orderable: false },
-                //     { targets: [7], orderable: false }
             ],
             layout: {
                 topstart: 'pageLength',
@@ -195,20 +227,24 @@
             $('#lblMEditBy').text(data.modifiedBy);
             $('#lblMCreateDate').text(formatDate(data.addDate));
             $('#lblMCreateBy').text(data.createdBy);
-                      $('#chkDeletedF').prop("checked", data.isDeleted);
+            $('#chkDeletedF').prop("checked", data.isDeleted);
               for(var i = 0; i < data.locations.length; i++) {
-                    var location = data.locations[i];
-                    var row = '<tr id="rowLoc_' + location.locationID + '">' +
-                    '<td><input type="button" id="btnEditLoc_' + location.locationID + '" value="Edit" class="btn btn-link" onclick="setEditLoc($(this).closest(\'tr\'));" />' +
-                            (data.locations.length > 1 ? '<input type="button" id="btnDelLoc_' + location.locationID + '" value="Delete" class="btn btn-link" onclick="setDeleteLoc($(this).closest(\'tr\'));setDirty();" /></td>' : '') +
-                        '<td style="display:none;" id="cid_" ' + i + '" name=cid_" ' + i + '">' + location.locationID + '</td>' +
-                        '<td class="col-md-3" id="cstreet_" ' + i + '" name=cstreet_" ' + i + '">' + location.street + '</td>' +
-                        '<td class="col-md-3" id="ccity_" ' + i + '" name=ccity_" ' + i + '">' + location.city + '</td>' +
-                        '<td class="col-md-3" id="cphone_" ' + i + '" name=cphone_" ' + i + '">' + location.phone + '</td>' +
-                        '<td class="col-md-3" id="cfax_" ' + i + '" name=cfax_" ' + i + '">' + location.fax + '</td>' +
-                        '<td><input type="checkbox" id="chkInHouse_' + location.locationID + '" name="chkInHouse_' + location.locationID +  '" disabled  ' + (location.inHouse ? 'checked' : '') + ' /></td>' +
-                '</tr>';
-                    $('#tblLocationsBody').append(row);
+              var location = data.locations[i];
+                        var strEdit = '@Html.Raw(strEdit)'.replace("$ID", location.locationID).replace("$Cn", data.locations.length);
+                   var strDelete = '@Html.Raw(strDelete)'.replace("$ID", location.locationID);
+                   strEdit = strEdit + (data.locations.length > 1 ? strDelete : '');
+                     var row = '<tr id="rowLoc_' + location.locationID + '">' + strEdit  +
+            // '<td><input type="button" id="btnEditLoc_' + location.locationID + '" value="Edit" class="btn btn-link" onclick="setEditLoc($(this).closest(\'tr\'));" />' +
+            //         (data.locations.length > 1 ? '<input type="button" id="btnDelLoc_' + location.locationID + '" value="Delete" class="btn btn-link" onclick="setDeleteLoc($(this).closest(\'tr\'));setDirty();" /></td>' : '') +
+                '<td style="display:none;" id="cid_" ' + i + '" name=cid_" ' + i + '">' + location.locationID + '</td>' +
+                '<td class="col-md-3" id="cstreet_" ' + i + '" name=cstreet_" ' + i + '">' + location.street + '</td>' +
+                '<td class="col-md-3" id="ccity_" ' + i + '" name=ccity_" ' + i + '">' + location.city + '</td>' +
+                '<td class="col-md-3" id="cphone_" ' + i + '" name=cphone_" ' + i + '">' + location.phone + '</td>' +
+                '<td class="col-md-3" id="cfax_" ' + i + '" name=cfax_" ' + i + '">' + location.fax + '</td>' +
+                '<td><input type="checkbox" id="chkInHouse_' + location.locationID + '" name="chkInHouse_' + location.locationID + '" disabled  ' + (location.inHouse ? 'checked' : '') + ' /></td>' +
+        '</tr>';
+
+        $('#tblLocationsBody').append(row);
                 }
                enableNew();
               $('#myModal').modal('show');
@@ -253,7 +289,7 @@
          $('#modalTitle').text('New Doctor');
          $('#myModal').modal('show');
      }
-    function setEditLoc(trObj) {
+    function setEditLoc(trObj, locationCount) {
         var locationId = $(trObj).find("td").eq(1).text();
         for(var i = 2; i<7; i++){
             if(i<6){
@@ -283,7 +319,7 @@
         var tdObj =arguments[0].find("td").eq(0);
         $(tdObj).empty();
              $(tdObj).html('<input type="button" id="btnUpdateLoc_' + locationId + '" value="Update" class="btn btn-link" onclick="setUpdateLoc($(this).closest(\'tr\')); setDirty();" />' +
-                    '<input type="button" id="btnCancelLoc_' + locationId + '" value="Cancel" class="btn btn-link" onclick="setCancelLoc($(this).closest(\'tr\'));" />');
+                    '<input type="button" id="btnCancelLoc_' + locationId + '" value="Cancel" class="btn btn-link" onclick="setCancelLoc($(this).closest(\'tr\'), ' + locationCount + ');" />');
         $("#btnAddLocation").prop("disabled", true);
     }
     function setDeleteLoc(trObj) {     
@@ -295,7 +331,7 @@
         $(trObj).find("td").eq(1).text(locationId);
         $(trObj).hide();
     }
-    function setCancelLoc(trObj) {
+    function setCancelLoc(trObj, locationCount) {
         var locationId = $(trObj).find("td").eq(1).text();
         var street = $(trObj).find("td").eq(2).data('originalValue');  // $(trObj).find("td").eq(2).find("input").val();
         var city = $(trObj).find("td").eq(3).data('originalValue');  //.val();
@@ -312,7 +348,7 @@
         var tdObj =$(trObj).find("td").eq(0);
         $(tdObj).empty();
         $(tdObj).html('<input type="button" id="btnEditLoc_' + locationId + '" value="Edit" class="btn btn-link" onclick="setEditLoc($(this).closest(\'tr\'));" />' +
-                    '<input type="button" id="btnDelLoc_' + locationId + '" value="Delete" class="btn btn-link" onclick="setDeleteLoc($(this).closest(\'tr\'));setDirty();" />');
+                   (locationCount > 1 ?  '<input type="button" id="btnDelLoc_' + locationId + '" value="Delete" class="btn btn-link" onclick="setDeleteLoc($(this).closest(\'tr\'));setDirty();" />' : ''));
             enableNew();
     }
     function setUpdateLoc(trObj) {
@@ -441,6 +477,9 @@
     function setDirty() {
         $("input[name='btnSave']").attr("disabled", false);
         IsDirty = true;
+    }
+    function navigateToPage(iActive) {
+        window.location.assign('Doctors?sActive=' + iActive);
     }
 </script>
 }

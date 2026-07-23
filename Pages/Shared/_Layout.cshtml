@@ -1,4 +1,7 @@
-﻿<!DOCTYPE html>
+﻿@{
+   // var s = Model.sMask;
+}
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -9,13 +12,16 @@
 
     <title>@ViewData["Title"] - Appointments</title>
     <script type="importmap"></script>
-@*     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />*@   
+    @* <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />    *@
     <link rel="stylesheet" href="~/css/site.css"  />
     @* <link rel="stylesheet" href="~/Appointments.styles.css" asp-append-version="true" /> *@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://getbootstrap.com/docs/5.2/assets/css/docs.css" rel="stylesheet">
-@*     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js"></script> *@
-        <style>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js"></script>
+
+</head>
+<body>
+    <style>
         .dropdown-item {
         font-size: 13.44px !important;
         color: #17264A !important;
@@ -25,8 +31,8 @@
         }
 
         .dropdown-menu {
-        border-top-width: medium;
-        border-top-color: red;
+            border-top-width: medium;
+            border-top-color: deepskyblue;
         }
 
         .dropdown-item:active {
@@ -46,7 +52,8 @@
         }
 
         .fntsize {
-        font-size: 18px;
+            font-size: 18px;
+            color: black;
         }
 
         td {
@@ -70,12 +77,14 @@
         height: 20px;
         }
 
+        .dropdown .dropdown-menu {
+            display: none;
+        }
 
-
-        </style>
-</head>
-<body>
-   
+        .dropdown:hover .dropdown-menu {
+            display: block;
+        }
+    </style>
 
     <header class="dontprint" id="appHeader">
             <nav class="navbar navbar-expand-lg bg-light">
@@ -89,24 +98,50 @@
                     </button>
                     <div class="collapse navbar-collapse" id="navbarSupportedContent" style="padding-left: 150px; ">
                         <ul class="navbar-nav me-auto mb-2 mb-lg-1">
-                            <li class="nav-item">
-                                @* <a class="nav-link active" asp-area="" asp-controller="Home" asp-action="Index"><div class="fntsize">Appointments</div></a> *@
+                        @{
+                            foreach(var sTable in Model.lstTables)
+                            {
+                         
+                                string sThisMask = ViewData[sTable + "AccessMask"]?.ToString() ?? "";
+                                if (sThisMask != null && sThisMask.IndexOf('V') >= 0)
+                                {
+                                  <li class="nav-item">
+                                    <a class="nav-link" href="#" onclick="navigateScreen('@(sTable == "Appointments" ? "Index" : sTable)');"><div class="fntsize">@sTable</div></a>
+                                </li> 
+                                }
+                            }
+                     }
+@*                     <li class="nav-item">
                             <a class="nav-link" href="#" onclick="navigateScreen('Index');"><div class="fntsize">Appointments</div></a>
-                            </li>
+                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="#" onclick="navigateScreen('Doctors');"><div class="fntsize">Doctors</div></a>
-                        </li>
+                        </li> *@
 @*                         <li class="nav-item">
-                            <a class="nav-link" href="#" onclick="navigateScreen('Residents');"><div class="fntsize">Residents</div></a>
+                            <a class="nav-link" href="#" onclick="navigateScreen('Residents');"><span class="fntsize">Residents</span></a>
                         </li>
                             <li class="nav-item">
-                            <a class="nav-link" href="#" onclick="navigateScreen('Nurses');"><div class="fntsize">Nurses</div></a>
+                            <a class="nav-link" href="#" onclick="navigateScreen('Nurses');"><span class="fntsize">Nurses</span></a>
                             </li> *@
-                            <li class="nav-item">
-                            <a class="nav-link" href="#" onclick="navigateScreen('Drivers');"><div class="fntsize">Drivers</div></a>
+@*                             <li class="nav-item">
+                                <a class="nav-link" href="#" onclick="navigateScreen('Drivers');"><span class="fntsize">Drivers</span></a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" href="#" onclick="navigateScreen('Cars');"><div class="fntsize">Cars</div></a>
+                                <a class="nav-link" href="#" onclick="navigateScreen('Cars');"><span class="fntsize">Cars</span></a>
+                            </li>
+ *@                       
+                        @if (Model?.IsAdmin)
+                        {
+                            <li class="nav-item dropdown" style="display:inline-block;">
+                                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"><span class="fntsize">Admin</span></a>
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <a class="dropdown-item" href="#" onclick="navigateScreen('Groups');"><span class="fntsize">Assign Users to Groups</span></a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="#" onclick="navigateScreen('Permissions');"><span class="fntsize">Group Permissions</span></a>
+                                    </li>
+                                </ul>
                             </li>
                             <li class="nav-item">
                             <a class="nav-link" href="#" onclick="navigateScreen('AppointmentDetails');"><div class="fntsize">Driver&Appt</div></a>
@@ -116,6 +151,7 @@
             </div>
 
        </nav>
+      
         <table border="0" cellpadding="0" cellspacing="0" width="100%">
             <tr>
                 <td>
@@ -160,7 +196,7 @@
         </table>
 
     </header>
-    <div class="container-fluid">
+    <div id ="content" class="container-fluid">
         <main role="main" class="pb-3">
             @RenderBody()
         </main>
@@ -185,12 +221,28 @@
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script> 
     <script src="~/js/site.js" asp-append-version="true"></script>
 
-    @await RenderSectionAsync("Scripts", required: false)
+    @await RenderSectionAsync("Scripts", required: false);
     <script>
+        // $(document).ready(function () {
+        //     //document.getElementById('content').style.width = gridWidth() + "px";
+        //     document.getElementById('content').style.height = gridHeight() + "px";
+        //     // alert(document.getElementById('content').style.width + "_ " + document.getElementById('content').style.height);  
+        // });
         function navigateScreen(screenName) {
             var sUrl = screenName;
             location.replace(sUrl);
         }
+        function gridHeight() {
+        var iRet = screen.availHeight;
+        iRet = iRet - document.getElementById('appHeader').offsetHeight;
+       // alert (iRet);
+                iRet = iRet - document.getElementById('appFooter').offsetHeight;
+     //           alert (iRet);
+                iRet = iRet - document.getElementById('hder').offsetHeight;
+                // alert (iRet);
+                return iRet - 250;   - screen.availHeight - document.getElementById('appHeader').offsetHeight - document.getElementById('appFooter').offsetHeight - 100;
+        }
+        function gridWidth() { return screen.availWidth; }
         </script>
 </body>
 </html>
