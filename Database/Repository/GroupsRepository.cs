@@ -5,6 +5,8 @@ using Dapper;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Runtime.ConstrainedExecution;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace Appointments.Database.Repository
@@ -38,10 +40,12 @@ namespace Appointments.Database.Repository
             try
             {
                 var query = @"SELECT u.LastName, u.FirstName, u.Middle, u.displayName, u.sAMAccountName, u.Employee_Member_Ind, u.Employee_Member_Number 
-					FROM [MKL_Apostolic_projects].[dbo].[vw_AP_SEC_SystemUsers] u WHERE u.sAMAccountName not in (SELECT UserName FROM [dbo].[tbl_groupmembers] where GroupID = " +
-                    GroupID + ") ORDER BY displayName";
+					FROM [MKL_Apostolic_projects].[dbo].[vw_AP_SEC_SystemUsers] u WHERE u.sAMAccountName not in (SELECT UserName FROM [dbo].[tbl_groupmembers] 
+                    where GroupID = @GroupID) ORDER BY displayName";
                 using var connection = _context.CreateConnection();
-                var dioList = await connection.QueryAsync<SecurityUsersDto>(query);
+                var parameters = new DynamicParameters();
+                parameters.Add("GroupID", GroupID);
+                var dioList = await connection.QueryAsync<SecurityUsersDto>(query, parameters);
                 return (List<SecurityUsersDto>)dioList;
             }
             catch (Exception e)
@@ -55,10 +59,11 @@ namespace Appointments.Database.Repository
             try
             {
                 var query = @"SELECT u.LastName, u.FirstName, u.Middle, u.displayName, u.sAMAccountName, u.Employee_Member_Ind, u.Employee_Member_Number 
-					FROM [MKL_Apostolic_projects].[dbo].[vw_AP_SEC_SystemUsers] u JOIN [dbo].[tbl_groupmembers] m on u.sAMAccountName = m.UserName where m.GroupID = " +
-                    GroupID + " ORDER BY displayName";
+					FROM [MKL_Apostolic_projects].[dbo].[vw_AP_SEC_SystemUsers] u JOIN [dbo].[tbl_groupmembers] m on u.sAMAccountName = m.UserName where m.GroupID = @GroupID  ORDER BY displayName";
                 using var connection = _context.CreateConnection();
-                var dioList = await connection.QueryAsync<SecurityUsersDto>(query);
+                var parameters = new DynamicParameters();
+                parameters.Add("GroupID", GroupID);
+                var dioList = await connection.QueryAsync<SecurityUsersDto>(query, parameters);
                 return (List<SecurityUsersDto>)dioList;
             }
             catch (Exception e)
@@ -73,11 +78,24 @@ namespace Appointments.Database.Repository
             try
             {
                 loginList = loginList.Replace(" ", "");
-                loginList = "'" + loginList.Replace(",", "','") + "'";
+                //loginList = "'" + loginList.Replace(",", "','") + "'";
+                string[] loginNames = loginList.Split(',');
 
-                var query = @"delete from [dbo].[tbl_groupmembers] where UserName in (" + loginList + ") and GroupID = " + GroupID;
+                //var query = @"delete from [dbo].[tbl_groupmembers] where UserName in (" + loginList + ") and GroupID = @GroupID";
                 using var connection = _context.CreateConnection();
-                connection.Query(query);
+                //var parameters = new DynamicParameters();
+                ////parameters.Add("loginList", loginList);
+                //parameters.Add("GroupID", GroupID);
+                //connection.Query(query, parameters);
+                foreach (string sName in loginNames)
+                {
+                    var parameters = new DynamicParameters();
+                    string sN = sName.Trim().ToLower();
+                    parameters.Add("sN", sN);
+                    parameters.Add("GroupID", GroupID.ToString());
+                    var query = @"delete from [dbo].[tbl_groupmembers] where UserName = @sN and GroupID = @GroupID";
+                    connection.Query(query, parameters);
+                }
                 return true;
             }
             catch (Exception e)
@@ -97,10 +115,13 @@ namespace Appointments.Database.Repository
                 using var connection = _context.CreateConnection();
                 foreach (string sName in loginNames)
                 {
-                    string sN = sName.Trim().ToLower();
-                    var query = @"insert into [dbo].[tbl_groupmembers] ([UserName],[GroupID]) select '" + sN + "', " + GroupID.ToString() +
-                        " where not exists (select 1 from  [dbo].[tbl_groupmembers] where UserName = '" + sN + "' and GroupID = " + GroupID.ToString() + ")";
-                    connection.Query(query);
+                  var parameters = new DynamicParameters();
+                  string sN = sName.Trim().ToLower();
+                 parameters.Add("sN", sN);
+                    parameters.Add("GroupID", GroupID.ToString());
+                   var query = @"insert into [dbo].[tbl_groupmembers] ([UserName],[GroupID]) select @sN, @GroupID
+                         where not exists (select 1 from  [dbo].[tbl_groupmembers] where UserName =@sN and GroupID =@GroupID)";
+                    connection.Query(query, parameters);
                 }
 
                 return true;
@@ -117,25 +138,27 @@ namespace Appointments.Database.Repository
             {
                 var query = "";
                 using var connection = _context.CreateConnection();
-
+                var parameters = new DynamicParameters();
+                parameters.Add("GroupID", iGroupID.ToString());
+                parameters.Add("Label", sLabel);
                 if (bDelete && iGroupID > 0)
                 {
-                    query = @"delete from [dbo].[tbl_groupmembers] where GroupID = " + iGroupID.ToString();
-                    connection.Query(query);
-                    query = @"delete from [dbo].[tbl_groups] where GroupID = " + iGroupID.ToString();
-                    connection.Query(query);
+                    query = @"delete from [dbo].[tbl_groupmembers] where GroupID = @GroupID";
+                    connection.Query(query, parameters);
+                    query = @"delete from [dbo].[tbl_groups] where GroupID = @GroupID";
+                    connection.Query(query, parameters);
                     return true;
                 }
                 else if (iGroupID == 0)
                 {
-                    query = @"insert into [dbo].[tbl_groups] (Label) values ('" + sLabel + "')";
-                    connection.Query(query);
+                    query = @"insert into [dbo].[tbl_groups] (Label) values (@Label)";
+                    connection.Query(query, parameters);
                     return true;
                 }
                 else if (iGroupID > 0 && sLabel != null && sLabel.Trim().Length > 0)
                 {
-                    query = @"update [dbo].[tbl_groups] set Label = '" + sLabel + "' where GroupID = " + iGroupID.ToString();
-                    connection.Query(query);
+                    query = @"update [dbo].[tbl_groups] set Label = @Label where GroupID = @GroupID";
+                    connection.Query(query, parameters);
                     return true;
 
                 }
