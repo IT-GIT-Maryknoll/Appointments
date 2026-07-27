@@ -20,14 +20,14 @@ jobs:
         dotnet-version: '9.0.x'
 
     - name: Restore Dependencies
-      run: dotnet restore
+      run: dotnet restore -r win-x64
 
     - name: Build Application
-      run: dotnet build --configuration Release --no-restore
+      run: dotnet build --configuration Release -r win-x64 --no-restore
 
-    # Framework-Dependent deployment creates a portable folder structure for IIS
+    # Target runtime changed to win-x64 for Windows IIS hosting
     - name: Publish Application
-      run: dotnet publish --configuration Release --output ./publish --no-build
+      run: dotnet publish --configuration Release -r win-x64 --output ./publish --no-build
 
     - name: Upload Build Artifacts
       uses: actions/upload-artifact@v4
