@@ -164,15 +164,15 @@
                         </tr>
                         <tr id="trDateTime">
                             <td class="form-label" style="padding:10px;">Date:</td>
-                                    <td style="padding:10px; align-content:flex-start;"><input type="date" id="txtMDate" name="txtMDate" @(!bEdit ? "readonly" : "") class="form-control-lg" /></td>
+                                    <td style="padding:10px; align-content:flex-start;"><input type="date" id="txtMDate" name="txtMDate" @(!bEdit ? "readonly" : "") class="form-control" /></td>
                             <td style="padding:10px;">Time:</td>
-                                    <td style="padding:10px; align-content:flex-start;"><input type="time" id="txtMTime" name="txtMTime" step="1800" @(!bEdit ? "readonly" : "") class="form-contro-lg" /></td>
+                                    <td style="padding:10px; align-content:flex-start;"><input type="time" id="txtMTime" name="txtMTime" step="1800" @(!bEdit ? "readonly" : "") class="form-control" /></td>
                          </tr>
                         <tr id="trReoccurring" style="display:none;">
                             <td class="form-label" style="padding:10px;">Start Date:</td>
-                                    <td style="padding:10px; align-content:flex-start;"><input type="date" id="txtMStartDate" name="txtMStartDate" @(!bEdit ? "readonly" : "") class="form-control-lg" /></td>
+                                    <td style="padding:10px; align-content:flex-start;"><input type="date" id="txtMStartDate" name="txtMStartDate" @(!bEdit ? "readonly" : "") class="form-control" /></td>
                             <td style="padding:10px;">End Date:</td>
-                            <td style="padding:10px; align-content:flex-start;"><input type="date" id="txtMEndDate" name="txtMEndDate" @(!bEdit ? "readonly" : "") class="form-control-lg" /></td>
+                            <td style="padding:10px; align-content:flex-start;"><input type="date" id="txtMEndDate" name="txtMEndDate" @(!bEdit ? "readonly" : "") class="form-control" /></td>
                         </tr>
                             <tr id="trWeekdays" style="display:none;">
                                 <td colspan="4">
@@ -194,7 +194,7 @@
                             <td style="padding:10px;">Resident:</td>
                             <td style="padding:10px; align-content:flex-start;">
                                 <input type="hidden" id="hdnMRes" name="hdnMRes" value="" />
-                                <input type="text" id="txtMRes" list="dlMRes" name="txtRes" @(!bEdit ? "readonly" : "") class="form-control-lg" onchange="ChangeFilter(this);" />
+                                <input type="text" id="txtMRes" list="dlMRes" name="txtRes" @(!bEdit ? "readonly" : "") class="form-control" onchange="ChangeFilter(this);" />
                                 <datalist id="dlMRes" name="lblMRes">
                                     @foreach (var res in Model.lstResidents)
                                     {
@@ -204,7 +204,7 @@
                             </td>
                             <td style="padding:10px;">Status:</td>
                             <td style="padding:10px; align-content:flex-start;">
-                                <select id="cmbMStatus" name="cmbMStatus" class="form-control-lg" @(!bEdit ? "disabled" : "")>
+                                <select id="cmbMStatus" name="cmbMStatus" class="form-control" @(!bEdit ? "disabled" : "")>
                                     <option value="Booked" label="Booked" />
                                     <option value="Cancelled" label="Cancelled" />
                                 </select>
@@ -214,7 +214,7 @@
                             <td style="padding:10px; ">Doctor:</td>
                             <td style="padding:10px; align-content:flex-start;">
                                 <input type="hidden" id="hdnMDoc" name="hdnMDoc" value=""  />
-                                <input type="text" id="txtMDoc" name="txtMDoc" list="dlMDoc" class="form-control-lg" @(!bEdit ? "readonly" : "")   onchange="ChangeFilter(this); changeDoctor($('#hdnMDoc').val());" />
+                                <input type="text" id="txtMDoc" name="txtMDoc" list="dlMDoc" class="form-control" @(!bEdit ? "readonly" : "")   onchange="ChangeFilter(this); changeDoctor($('#hdnMDoc').val());" />
                                 <datalist id="dlMDoc" name="lblMDoc">
                                     @foreach (var res in Model.lstDoctors)
                                     {
@@ -223,27 +223,27 @@
                                 </datalist>
                             </td>
                             <td style="padding:10px; ">Specialty:</td>
-                            <td style="padding:10px; align-content:flex-start;"><label id="lblMSpecialty" name="lblMSpecialty" class="form-contro-lg" ></label></td>
+                            <td style="padding:10px; align-content:flex-start;"><label id="lblMSpecialty" name="lblMSpecialty" class="form-control" ></label></td>
                         </tr>
                         <tr>
                             <td style="padding:10px;">Address:</td>
                             <td style="padding:10px; align-content:flex-start;">
-                                <select id="cmbMAddr" name="cmbMAddr" class="form-control-lg" @(!bEdit ? "disabled" : "") onchange="changeLocation(this.value);"></select>
+                                <select id="cmbMAddr" name="cmbMAddr" class="form-control" @(!bEdit ? "disabled" : "") onchange="changeLocation(this.value);"></select>
                             </td>
                             <td style="padding:10px; ">City:</td>
-                            <td style="padding:10px; align-content:flex-start;"><label id="lblMCity" name="lblMCity" class="form-control-lg" /></td>
+                            <td style="padding:10px; align-content:flex-start;"><label id="lblMCity" name="lblMCity" class="form-control" /></td>
                         </tr>
                         <tr>
                             <td style="padding:10px; ">Phone:</td>
-                            <td style="padding:10px; align-content:flex-start;"><label id="lblMPhone" name="lblMPhone" class="form-control-lg" /></td></td>
+                            <td style="padding:10px; align-content:flex-start;"><label id="lblMPhone" name="lblMPhone" class="form-control" /></td></td>
                             <td style="padding:10px; ">Fax:</td>
-                            <td style="padding:10px; align-content:flex-start;"><label id="lblMFax" name="lblMFax" class="form-control-lg" /></td>
+                            <td style="padding:10px; align-content:flex-start;"><label id="lblMFax" name="lblMFax" class="form-control" /></td>
                         </tr>
                         <tr>
                             <td style="padding:10px;">Driver:</td>
                             <td>
                                 <input type="hidden" id="hdnMDriver" name="hdnMDriver" value="" />
-                                                    <input type="text" id="txtMDriver" name="txtMDriver" list="dlMDriver" class="form-control-lg" style="width: 150px;" @(!bEdit ? "readonly" : "") onchange="ChangeFilter(this);" />
+                                                    <input type="text" id="txtMDriver" name="txtMDriver" list="dlMDriver" class="form-control" style="width: 150px;" @(!bEdit ? "readonly" : "") onchange="ChangeFilter(this);" />
                                 <datalist id="dlMDriver" name="lblMDriver">
                                     @foreach (var res in Model.lstDrivers)
                                     {
@@ -253,7 +253,7 @@
                             </td>
                                 <td style="padding:10px;">Car:</td>
                                     <td style="padding:10px; align-content:flex-start;">
-                                        <select id="cmbMCar" name="cmbMCar" @(!bEdit ? "disabled" : "") class="form-control-lg">
+                                        <select id="cmbMCar" name="cmbMCar" @(!bEdit ? "disabled" : "") class="form-control">
                                             <option value="">Please Select</option>
                                             @foreach (var res in Model.lstCars)
                                             {
@@ -278,13 +278,13 @@
                                         </table>
                                  </td>
                             <td style="padding:10px;">Pick up:</td>
-                            <td style="padding:10px; align-content:flex-start;"><input type="time" id="txtMPickup" name="txtPickup" step="1800" @(bEdit ? "" : "disabled") class="form-control-lg" /></td>
+                            <td style="padding:10px; align-content:flex-start;"><input type="time" id="txtMPickup" name="txtPickup" step="1800" @(bEdit ? "" : "disabled") class="form-control" /></td>
                         </tr>
                         <tr><td colspan="4">&nbsp;</td></tr>
                         <tr>
                             <td><label id="lblMPrep">Prep:</label></td>
                             <td>
-                                <select id="cmbMPrep" name="cmbMPrep" class="form-control-lg" @(bEdit ? "" : "disabled")>
+                                <select id="cmbMPrep" name="cmbMPrep" class="form-control" @(bEdit ? "" : "disabled")>
                                     <option value="">Please Select</option>
                                     @foreach (var res in Model.lstPreps )
                                     {
@@ -294,7 +294,7 @@
                             </td>
                             <td><label id="lblMApptType">Appt Type:</label></td>
                             <td>
-                                <select id="cmbMApptType" name="cmbMApptType" class="form-control-lg" @(bEdit ? "" : "disabled")>
+                                <select id="cmbMApptType" name="cmbMApptType" class="form-control" @(bEdit ? "" : "disabled")>
                                     <option value="">Please Select</option>
                                     @foreach (var res in Model.lstAppointmentTypes)
                                     {
@@ -312,7 +312,7 @@
                         </tr>
                         <tr>
                             <td><label id="lblMNotes">Notes:</label></td>
-                            <td colspan="3"><textarea id="txtMNotes" name="txtMNotes" class="form-control-lg" rows="3" style="width:100%;" @(bEdit ? "" : "disabled")></textarea></td>
+                            <td colspan="3"><textarea id="txtMNotes" name="txtMNotes" class="form-control" rows="3" style="width:100%;" @(bEdit ? "" : "disabled")></textarea></td>
                         </tr>
                     </table>
                     
