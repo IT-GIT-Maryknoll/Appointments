@@ -7,8 +7,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
-using System.DirectoryServices;
-using System.DirectoryServices.AccountManagement;
 using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
@@ -31,6 +29,8 @@ namespace Appointments.Pages
         public string cmbApptType = "";
         public string bFilter = "false";
         public bool ShowInhouse { get; set; }
+        public bool canSeeAll { get; set; }
+        public string sMask = "";
 
         public string sMask = "";
 
@@ -103,7 +103,8 @@ namespace Appointments.Pages
 
             DateTime? startOfDayFilter = startDt.UtcDateTime.Date;
             DateTime? endofDayFilter = endDt.UtcDateTime.Date;
-
+            Console.WriteLine(sMask);
+            Console.WriteLine("value of Cansee  "+canSeeAll);
             sFilter=$"[ApptTime] >= '{startOfDayFilter:yyyy-MM-dd HH:mm:ss}' And [ApptTime] <= '{endofDayFilter:yyyy-MM-dd HH:mm:ss}'";
             sFilter=sFilter+"And [Status]='Booked'";
             sFilter=sFilter+"And [FullName] Is Not Null";
