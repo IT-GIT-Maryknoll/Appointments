@@ -30,9 +30,7 @@ namespace Appointments.Pages
         public string bFilter = "false";
         public bool ShowInhouse { get; set; }
         public bool canSeeAll { get; set; }
-        public string sMask = "";
-
-        public string sMask = "";
+             public string sMask = "";
 
         public void OnGet()
             {
