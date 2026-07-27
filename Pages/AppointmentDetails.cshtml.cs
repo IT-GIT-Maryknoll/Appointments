@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.DirectoryServices;
-using System.DirectoryServices.AccountManagement;
 using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
@@ -9,16 +7,15 @@ using System.Threading.Tasks;
 using Appointments.Database.Dto;
 using Appointments.Database.Interfaces;
 
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace Appointments.Pages
     {
-    public class AppointmentDetailsModel(IConfiguration configuration,IAppointmentsRepository appointmentsData):PageModel
+    public class AppointmentDetailsModel(ILogger<AppointmentDetailsModel> logger,IConfiguration configuration,IPermissionsRepository permissionsRepository,IAppointmentsRepository appointmentsData):BasePageModel(logger,configuration,permissionsRepository)
         {
-        public UserDto UserInfo;
+        private readonly ILogger<AppointmentDetailsModel> _logger = logger;
         private readonly IConfiguration _configuration = configuration;
         public List<AppointmentDto> lstAppointments = [];
         private readonly IAppointmentsRepository _appointmentsData = appointmentsData;
@@ -31,63 +28,17 @@ namespace Appointments.Pages
         public string cmbApptType = "";
         public string bFilter = "false";
         public bool ShowInhouse { get; set; }
+        public bool canSeeAll { get; set; }
+        public string sMask = "";
 
-        public void OnGet()
+        public void OnGet(string sActive)
             {
-            string sMsg = "";
-
-            UserInfo=GetUserInfo(GetUserName());
-            }
-
-        public UserDto GetUserInfo(string sUser)
-            {
-            if(UserInfo is object)
-                return UserInfo;
-            using var context = new PrincipalContext(ContextType.Domain);
-            var userPrincipal = UserPrincipal.FindByIdentity(context,IdentityType.SamAccountName,sUser);
-            if(userPrincipal!=null)
-                {
-                DirectoryEntry? directoryEntry = userPrincipal.GetUnderlyingObject() as DirectoryEntry;
-                UserDto oRet = new UserDto();
-                oRet.sAMAccountName=sUser;
-                oRet.FirstName=userPrincipal.GivenName;
-                oRet.MI=userPrincipal.MiddleName;
-                oRet.LastName=userPrincipal.Surname;
-                oRet.DisplayName=userPrincipal.DisplayName;
-                oRet.MbrEmpIndicator=directoryEntry.Properties["company"].Value==null ? "" : directoryEntry.Properties["company"].Value.ToString();
-                oRet.MbrEmpNumber=userPrincipal.EmployeeId;
-                if(oRet.MbrEmpNumber==null)
-                    oRet.MbrEmpNumber=(directoryEntry.Properties["title"].Value==null ? "" : directoryEntry.Properties["title"].Value.ToString());
-                oRet.EmailAddress=userPrincipal.EmailAddress;
-                oRet.ADSDescription=userPrincipal.Description;
-                oRet.msExchHideFromAddressLists=(directoryEntry.Properties["msExchHideFromAddressLists"].Value==null ? false : directoryEntry.Properties["msExchHideFromAddressLists"].Value.ToString().ToLower().Equals("true"));
-                if(oRet.msExchHideFromAddressLists)
-                    oRet.EmailAddress="";
-
-                UserInfo=oRet;
-                return oRet;
-                }
-            return null;
-            }
-
-        private string GetUserName()
-            {
-            if(HttpContext==null)
-                return null;
-
-            var userName = HttpContext.User.Identity.Name;
-            string sUserConfig = configuration.GetValue<string>("UName");
-            if(sUserConfig!=null&&sUserConfig.Trim().Length>0)
-                userName=sUserConfig;
-            if(string.IsNullOrEmpty(userName)||userName.Length<0)
-                {
-                return "";
-                }
-            else
-                {
-                var arrName = userName.Split("\\");
-                return arrName[1];
-                }
+            int iActive = 1;
+            if(!int.TryParse(sActive,out iActive))
+                iActive=1;
+            OnGetBase();
+            canSeeAll=!string.IsNullOrEmpty(ViewData["AppointmentsAccessMask"]?.ToString());
+            sMask=ViewData["DriversAccessMask"]?.ToString()??"";
             }
 
         public async Task<JsonResult> OnGetGetAppointments(string start,string end)
@@ -100,7 +51,8 @@ namespace Appointments.Pages
 
             DateTime? startOfDayFilter = startDt.UtcDateTime.Date;
             DateTime? endofDayFilter = endDt.UtcDateTime.Date;
-
+            Console.WriteLine(sMask);
+            Console.WriteLine("value of Cansee  "+canSeeAll);
             sFilter=$"[ApptTime] >= '{startOfDayFilter:yyyy-MM-dd HH:mm:ss}' And [ApptTime] <= '{endofDayFilter:yyyy-MM-dd HH:mm:ss}'";
             sFilter=sFilter+"And [Status]='Booked'";
             sFilter=sFilter+"And [FullName] Is Not Null";
