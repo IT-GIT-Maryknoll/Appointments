@@ -23,7 +23,7 @@
                             <th>Priority</th>
                             @* <th>Inactive</th> *@
                             <th style="white-space:nowrap;">
-                                <select id="cmbActive" asp-route-sActive="this.value" onchange="navigateToPage(this.value);">
+                                <select id="cmbActive" asp-route-sActive="this.value" onchange="navigateToPage(this.value);" style="font-size:14px;">
                                     <option value="1" selected="@(Model.iLoadActive == 1 ? "selected" : null)">Active</option>
                                     <option value="2" selected="@(Model.iLoadActive == 2 ? "selected" : null)">Inactive</option>
                                     <option value="3" selected="@(Model.iLoadActive == 3 ? "selected" : null)">All</option>

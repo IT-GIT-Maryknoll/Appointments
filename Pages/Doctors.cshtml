@@ -30,7 +30,7 @@
                 @* <th style="white-space:nowrap;"><span>Active Only</span>&nbsp;<input type="checkbox" id="chkActive" @(Model.bLoadActive ? "checked" : "") onclick="location.reload();" /></th> *@
 @*                             <th style="white-space:nowrap;"><a style="padding-left:20px;color:yellow;" asp-page="./Doctors" asp-route-bActive=@(!bLoadActive ? "true" : "false")>@(bLoadActive ? "Load All" : "Load Active")</a></th> *@
                  <th style="white-space:nowrap;">
-                     <select id="cmbActive" asp-route-sActive="this.value" onchange="navigateToPage(this.value);">
+                     <select id="cmbActive" asp-route-sActive="this.value" onchange="navigateToPage(this.value);" style="font-size:14px;">
                         <option value="1" selected="@(Model.iLoadActive == 1 ? "selected" : null)">Active</option>
                         <option value="2" selected="@(Model.iLoadActive == 2 ? "selected" : null)">Inactive</option>
                         <option value="3" selected="@(Model.iLoadActive == 3 ? "selected" : null)">All</option>

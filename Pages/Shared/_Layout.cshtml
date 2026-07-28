@@ -101,7 +101,6 @@
                         @{
                             foreach(var sTable in Model.lstTables)
                             {
-                         
                                 string sThisMask = ViewData[sTable + "AccessMask"]?.ToString() ?? "";
                                 if (sThisMask != null && sThisMask.IndexOf('V') >= 0)
                                 {
