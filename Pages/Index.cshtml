@@ -43,7 +43,7 @@
 @if (!bView)
 {
     bool bHasAccess = false;
-    foreach (var sTab in Model.lstTables)
+    foreach (var sTab in Model.lstTableIDs)
     {
         var sMask = ViewData[sTab + "AccessMask"]?.ToString() ?? "";
         if(sMask != null && sMask.Length > 0) {
@@ -114,7 +114,7 @@
                     </tr>
         </table>
     </td>
-        <td rowspan="2"><div id="calendar" style="padding: 5px;"></div></td>
+        <td rowspan="2"><div id="calendar" style="padding: 5px;" ></div></td>
     </tr>
     <tr>
         <td style="vertical-align:bottom;">

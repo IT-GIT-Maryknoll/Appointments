@@ -145,6 +145,8 @@ namespace Appointments.Database.Repository
                 {
                     query = @"delete from [dbo].[tbl_groupmembers] where GroupID = @GroupID";
                     connection.Query(query, parameters);
+                    query = @"delete from [dbo].[tbl_grouprights] where GroupID = @GroupID";
+                    connection.Query(query, parameters);
                     query = @"delete from [dbo].[tbl_groups] where GroupID = @GroupID";
                     connection.Query(query, parameters);
                     return true;

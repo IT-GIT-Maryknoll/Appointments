@@ -20,7 +20,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js"></script>
 
 </head>
-<body>
+<body onresize="location.reload();">
     <style>
         .dropdown-item {
         font-size: 10px !important;
@@ -83,29 +83,88 @@
 
         .dropdown:hover .dropdown-menu {
             display: block;
+            font-weight:bold;
         }
+
+
+        .navbar-nav {
+   /*          color: white; /*#666666;*/
+           /*  background-color: lightseagreen; */ /* #9BB7D4;*/ */
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 10px !important;
+            border: solid white 1pt;
+            cursor: pointer;
+           /*  padding: 4px; */
+        }
+
+        .nav-link {
+            display: block;
+            width: 100%;
+            font-size: 10px !important;
+            color: #17264A !important;
+            letter-spacing: 0.2px;
+            line-height: 1.4em;
+            font-family: 'Montserrat',Helvetica,Arial,Lucida,sans-serif;
+        }
+
+        .navbar-nav .nav-link:hover {
+            color: red;
+        }
+        .navbar-nav  .nav-item:hover  {
+            background-color: lavender;
+            width: 100%;
+            color: red;
+            /* font-style: italic; */
+            /* padding: 4px; */
+        }
+        .navbar-nav .nav-link :active :after {
+            background-color: red;
+            width: 100%;
+            color: red;
+            font-weight:bold;
+            /* padding: 4px; */
+        }
+
+/*         a {
+            color: #666666;
+        } */
+
+/*         .nav-tabs .nav-item.active,
+        .nav-tabs .nav-item.show .nav-link {
+            background-color: #D1DCEB;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 20px;
+            color: red;
+        } */
     </style>
 
     <header class="dontprint" id="appHeader">
-            <nav class="navbar navbar-expand-lg bg-light">
-                <div class="container-fluid nav-apostolic">
-                    <div>
-                    <img src="~/images/LogoFinale.png" width="312" height="64" />
-                    <h2 style="display: inline-block; color: #336699; font-weight:bold; font-family: 'Montserrat',Helvetica,Arial,Lucida,sans-serif; padding-left: 80px; ">Appointments</h2>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                    </div>
+        <nav class="navbar navbar-expand-lg bg-light">
+            <div class="container-fluid nav-apostolic">
+                <div style="white-space:nowrap;width: 100%;">
+                    <table><tr><td><img src="~/images/LogoFinale.png" width="312" height="69" /></td><td>
+                <table border="0" cellpadding="0" cellspacing="0" style="text-align:left;">
+                    <tr>
+                        <td style="text-align:center;">
+                    <h3 style="display: inline-block; color: #336699; font-weight:bold; font-family: 'Montserrat',Helvetica,Arial,Lucida,sans-serif; padding-left: 80px; ">Society Health Service Appts</h3>
+
                     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                         <span class="navbar-toggler-icon"></span>
-                    </button>
-                    <div class="collapse navbar-collapse" id="navbarSupportedContent" style="padding-left: 150px; ">
+                </button></td></tr>
+                                    <tr style="background-color:transparent;">
+                                        <td style="text-align:center;">
+                    <div class="collapse navbar-collapse" id="navbarSupportedContent" style="padding-left: 80px; ">
                         <ul class="navbar-nav me-auto mb-2 mb-lg-1">
                         @{
-                            foreach(var sTable in Model.lstTables)
-                            {
-                                string sThisMask = ViewData[sTable + "AccessMask"]?.ToString() ?? "";
+                            for (var i = 0; i < Model.lstTables.Count; i++)
+                             {
+                                string sThisMask = ViewData[Model.lstTableIDs[i] + "AccessMask"]?.ToString() ?? "";
                                 if (sThisMask != null && sThisMask.IndexOf('V') >= 0)
                                 {
-                                  <li class="nav-item">
-                                    <a class="nav-link" href="#" onclick="navigateScreen('@(sTable == "Appointments" ? "Index" : sTable)');"><div class="fntsize">@sTable</div></a>
+                                  <li class="nav nav-item">
+                                       <a class="nav-link" href="#" onclick="navigateScreen('@Model.lstTableIDs[i]');"><div class="fntsize">@Model.lstTables[i]</div></a>
                                 </li> 
                                 }
                             }
@@ -143,31 +202,38 @@
                                 </ul>
                             </li>
                          }
-                        </ul>
+                                </ul>
                 </div>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </>
+</table>
+
+</div>
             </div>
 
        </nav>
-      
         <table border="0" cellpadding="0" cellspacing="0" width="100%">
             <tr>
                 <td>
                     <table border="0" cellpadding="0" cellspacing="0" width="100%" bgcolor="White" height="7" style="border-collapse: collapse">
-                        <tr>
-                            <td colspan="3" height="1" width="121%">
+@*                         <tr>
+                            <td colspan="3" height="7" width="121%">
                                 <font face="Arial, Arial, Helvetica">
-                                    <div id="Layer1" style="position: absolute; left: 3px; top: 5px; width: 247px; height: 60px; z-index: 1">                                        
+                                    <div id="Layer1" style="position: absolute; left: 3px; top: 5px; width: 247px; height: 60px; z-index: 1;">                                        
                                     </div>
                                 </font>
                             </td>
-                        </tr>
+                        </tr> *@
                         <tr>
-                            <td align="left" colspan="3">
-                                <div style="background-color: #336699; height: 21px;" />
+                            <td align="left" colspan="3" style="vertical-align:top;">
+                                <div style="background-color: #336699; height: 21px;" ></div>
                             </td>
                         </tr>
-                        <tr height: 21px;>
-                            <td style="width: 50px; background-color: #EEE1D1;  text-align: left; padding-left: 10px;color:chocolate; font-weight:bold;">@Model.UserInfo.DisplayName </td>
+                        <tr height="21px;">
+                            <td style="width: 100px; background-color: #EEE1D1;  text-align: left; padding-left: 10px;color:chocolate; font-weight:bold;">@Model.UserInfo.DisplayName </td>
                             <td style="background-color: #EEE1D1; text-align: center; padding-left: 10px; padding-right:10px; ">
                                  @if (TempData["Message"] != null)
                                 {
@@ -214,32 +280,53 @@
         </div>
     </footer>
 
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script> 
-    <script src="~/js/site.js" asp-append-version="true"></script>
 
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> 
+    <script src="https://cdn.datatables.net/2.1.8/js/dataTables.js"></script>
+    @* <script src="https://cdn.datatables.net/2.0.4/js/dataTables.min.js" defer></script> *@
+    <link href="https://cdn.datatables.net/2.1.8/css/dataTables.dataTables.min.css" rel="stylesheet" type="text/css" />
+
+    @* <script src="https://cdn.datatables.net/2.1.8/js/dataTables.jqueryui.js" defer></script> *@
+    <script src="https://cdn.datatables.net/buttons/3.2.0/js/dataTables.buttons.js" defer></script>
+    @* <script src="https://cdn.datatables.net/buttons/3.2.0/js/buttons.jqueryui.js" defer></script> *@
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js" defer></script>
+    <script src="https://cdn.datatables.net/buttons/3.2.0/js/buttons.html5.min.js" defer></script>
+    <script src="https://cdn.datatables.net/buttons/3.2.0/js/buttons.print.min.js" defer></script>
+
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false);
     <script>
-        // $(document).ready(function () {
-        //     //document.getElementById('content').style.width = gridWidth() + "px";
-        //     document.getElementById('content').style.height = gridHeight() + "px";
-        //     // alert(document.getElementById('content').style.width + "_ " + document.getElementById('content').style.height);  
-        // });
+       // $(window).resize(function () {
+       //      var newHeight = gridHeight();
+      
+       //    var tbl = document.getElementById('tblDoctors');
+       //  if(tbl != null) {
+
+       //           var table = $(tbl).DataTable();
+
+       //      // table.settings()[0].oInit.scrollY = newHeight + 'px';
+       //       table.settings()[0].oScroll.sY = newHeight + 'px';
+       //      table.draw(false);
+       //  }
+       //  else {alert("not found");}
+       //  });
         function navigateScreen(screenName) {
             var sUrl = screenName;
             location.replace(sUrl);
         }
         function gridHeight() {
-        var iRet = screen.availHeight;
+        var iRet = window.innerHeight;  
         iRet = iRet - document.getElementById('appHeader').offsetHeight;
-       // alert (iRet);
                 iRet = iRet - document.getElementById('appFooter').offsetHeight;
-     //           alert (iRet);
                 iRet = iRet - document.getElementById('hder').offsetHeight;
-                // alert (iRet);
-                return iRet - 250;   - screen.availHeight - document.getElementById('appHeader').offsetHeight - document.getElementById('appFooter').offsetHeight - 100;
+                return iRet - 150;  // screen.availHeight - document.getElementById('appHeader').offsetHeight - document.getElementById('appFooter').offsetHeight - 100;
         }
         function gridWidth() { return screen.availWidth; }
+
         </script>
 </body>
 </html>

@@ -69,6 +69,7 @@
                     <input type="hidden" id="hdnDoctorKey"  name="hdnDoctorKey" value="" />
                     <input type="hidden" id="hdnLocations" name="hdnLocations" value="" />
                     <table class="table table-borderless">
+                        <tbody>
                         <tr>
                             <td class="col-md-2"><label for="txtLast" class="form-label">Last Name</label></td>
                             <td class="col-md-3"><input type="text" id="txtLast" name="txtLast" class="form-control" @(!bEdit ? "readonly" : "") onchange="setDirty();" /></td>
@@ -87,7 +88,8 @@
                             <td><label for="chkDeletedF" class="form-label">Deleted</label></td>
                             <td><input type="checkbox" id="chkDeletedF" name="chkDeletedF" @(!bEdit ? "disabled" : "") onchange="setDirty();" /></td>
 
-                        </tr>
+                                    </tr>
+                                </tbody>
                     </table>
                     <hr/>
                             <h3 id="modalLocationTitle" class="modal-title fs-5">Locations&nbsp;&nbsp;
@@ -153,20 +155,16 @@
 
 @section Scripts {
 
-@* <script src="https://code.jquery.com/jquery-1.11.3.min.js"></script> *@
-<link href="https://cdn.datatables.net/2.1.8/css/dataTables.dataTables.min.css" rel="stylesheet" type="text/css" />
-<script src="https://cdn.datatables.net/2.0.4/js/dataTables.min.js" defer></script>
+@* <link href="https://cdn.datatables.net/2.1.8/css/dataTables.dataTables.min.css" rel="stylesheet" type="text/css" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" defer></script>
 
-<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js" defer></script>
-<script src="https://cdn.datatables.net/2.1.8/js/dataTables.js" defer></script>
-@* <script src="https://cdn.datatables.net/2.1.8/js/dataTables.jqueryui.js" defer></script> *@
+    <script src="https://cdn.datatables.net/2.1.8/js/dataTables.js" defer></script>
 <script src="https://cdn.datatables.net/buttons/3.2.0/js/dataTables.buttons.js" defer></script>
-<script src="https://cdn.datatables.net/buttons/3.2.0/js/buttons.jqueryui.js" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js" defer></script>
 <script src="https://cdn.datatables.net/buttons/3.2.0/js/buttons.html5.min.js" defer></script>
-<script src="https://cdn.datatables.net/buttons/3.2.0/js/buttons.print.min.js" defer></script>
+<script src="https://cdn.datatables.net/buttons/3.2.0/js/buttons.print.min.js" defer></script> *@
   <script type="text/javascript">
    var IsDirty = false;
     
@@ -174,7 +172,7 @@
        var bAdd = @bAdd.ToString().ToLower();
      //        bAdd = (bAdd === "true");
 
-             $('#myModal').modal({
+        $('#myModal').modal({
             backdrop: 'static',
             keyboard: false
          });
@@ -192,14 +190,16 @@
             }
 
             
-            $('#tblDoctors').dataTable({
-            order: [[1, 'asc']],
+            $('#tblDoctors').DataTable({
+                order: [[1, 'asc']],
             destroy: true,
+            stateSave: true,
             "sPaginationType": "full_numbers",
-            //contentHeight: gridHeight(), 
-           scrollY: '400px',
+            //contentHeight: gridHeight(),
+                scrollY: gridHeight() - 120,  // '400px',
+                scrollCollapse: true,
             "iDisplayLength": 100,
-           columnDefs: [
+            columnDefs: [
                 { targets: [0,6,7], searchable: false }, 
                 { targets: [0,6,7], orderable: false },
             ],
@@ -211,7 +211,16 @@
                 topend: 'search',
                 bottomend: 'paging',
             },
-        });
+        // preDrawCallback: function (settings) {
+        //             // Adjust height before each draw
+        //             let newHeight = gridHeight();
+        //             //debugger;
+        //             if (settings.oInit.scrollY !== newHeight) {
+        //                 //settings.oInit.scrollY = newHeight;
+        //                 $('#tblDoctors').DataTable().settings()[0].oScroll.sY = newHeight;
+        //             }
+        //         }
+         });
      });
      function setEdit(doctorKey) {
         var url = 'Doctors?handler=GetDoctorById&id=' + doctorKey;
@@ -261,7 +270,7 @@
             return;
         }
         $.get('Doctors?handler=DeleteDoctorById', { id: doctorKey }, function (data) {
-            if (data.success) {
+            if (data) {
                 alert('Doctor deleted successfully.');
                 location.reload(); // Refresh the page to show updated data
             } else {

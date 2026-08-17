@@ -55,7 +55,7 @@ namespace Appointments.Pages
             //sMask = _permissionsRepository.GetAccessMask(UserInfo.sAMAccountName, "Appointments", out sMsg);
             //bIsAdmin = _permissionsRepository.IsUserAdmin(UserInfo.sAMAccountName, out sMsg);
             //lstTables = GetTables();
-            sMask=ViewData["AppointmentsAccessMask"]?.ToString()??"";
+            sMask=ViewData["IndexAccessMask"]?.ToString()??"";
             if(lstAppointmentTypes.Count()==0)
                 {
                 lstAppointmentTypes=_appointmentsData.LoadAppointmentTypes(out sMsg);

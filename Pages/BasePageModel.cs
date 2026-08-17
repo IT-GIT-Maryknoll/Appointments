@@ -16,6 +16,7 @@ namespace Appointments.Pages
         public required UserDto UserInfo;
         public bool IsAdmin = false;
         public List<string> lstTables = new List<string>();
+        public List<string> lstTableIDs = new List<string>();
         public string sMsg = "";
 
         private readonly ILogger<BasePageModel> _logger = logger;
@@ -25,8 +26,9 @@ namespace Appointments.Pages
         public void OnGetBase()
         {
             UserInfo = GetUserInfo(GetUserName());
-            lstTables = GetTables();
-            foreach (var table in lstTables)
+            lstTables = GetTables("Tables");
+            lstTableIDs = GetTables("TableIDs");
+            foreach (var table in lstTableIDs)
             {
                 ViewData[table + "AccessMask"] = _permissionsRepository.GetAccessMask(UserInfo.sAMAccountName, table, out sMsg);
             }
@@ -78,10 +80,10 @@ namespace Appointments.Pages
             }
             return null;
         }
-        public List<string> GetTables()
+        public List<string> GetTables(string sSection)
         {
             List<string> lstTables = new List<string>();
-            foreach (var table in _configuration.GetSection("Tables").GetChildren())
+            foreach (var table in _configuration.GetSection(sSection).GetChildren())
             {
                 lstTables.Add(table.Value);
             }
