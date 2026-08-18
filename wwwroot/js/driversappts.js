@@ -54,13 +54,15 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
     }
-
-    // Trigger calendar refresh when "Show Inhouse" checkbox status changes
-    // checkbox1.addEventListener('change', () => {
-    //     if (ec) {
-    //         ec.refetchEvents();
-    //     }
-    // });
+    if (checkbox1) {
+        checkbox1.addEventListener('change', () => {
+            if (typeof ec !== 'undefined' && ec) {
+                ec.refetchEvents();
+            } else {
+                console.warn("Calendar is not initialized yet. Load it first!");
+            }
+        });
+    }
 });
 
 function loadDriversScheduleCalendar() {
