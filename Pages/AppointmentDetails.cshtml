@@ -1,7 +1,9 @@
 ﻿@page
 @model Appointments.Pages.AppointmentDetailsModel
 @{
-    }
+    var isCheckForAdmin = Model.IsAdmin;
+    var driverName = Model.UserInfo.LastName+", "+Model.UserInfo.FirstName;
+}
 
 
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@@event-calendar/build@3.12.0/event-calendar.min.css">
@@ -11,10 +13,13 @@
     <select id="calendar-month"></select>
     <select id="calendar-year"></select>
     <button id="go-button">Go</button>
+    <input type="hidden" asp-for="SharedMessage" value="@isCheckForAdmin" />
+    <input type="hidden" id="msgDriverName" value="@driverName" />
+    @if(Model.IsAdmin){
         <div class="form-check">
         <input class="form-check-input" asp-for="ShowInhouse" />
         <label class="form-check-label" asp-for="ShowInhouse"> Show In-house </label>
-        </div>
+        </div>}
     </div>
 
 <div id="calendar"></div>

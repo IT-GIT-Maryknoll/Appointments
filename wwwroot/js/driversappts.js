@@ -44,22 +44,26 @@ document.addEventListener('DOMContentLoaded', function () {
     yearSelect.value = today.getFullYear();
 
     // Render calendar for the first time
-    newFunction();
+    loadDriversScheduleCalendar();
 
     // Trigger re-render when standard checkbox changes
-    checkbox.addEventListener('change', () => {
-        newFunction();
-    });
+    if (checkbox) { // Added a quick safety check
+        checkbox.addEventListener('change', (e) => {
+            if (e.target.checked) {
+                loadDriversScheduleCalendar();
+            }
+        });
+    }
 
     // Trigger calendar refresh when "Show Inhouse" checkbox status changes
-    checkbox1.addEventListener('change', () => {
-        if (ec) {
-            ec.refetchEvents();
-        }
-    });
+    // checkbox1.addEventListener('change', () => {
+    //     if (ec) {
+    //         ec.refetchEvents();
+    //     }
+    // });
 });
 
-function newFunction() {
+function loadDriversScheduleCalendar() {
     let savedView = window.innerWidth < 600 ? 'listWeek' : 'dayGridMonth';
     let savedDate = new Date();
     if (ec) {
@@ -100,7 +104,10 @@ function newFunction() {
                         console.log("Calendar is still warming up...");
                         return;
                     }
-                    const url = `/AppointmentDetails?handler=GetAppointments&start=${fetchInfo.startStr.split('T')[0]}&end=${fetchInfo.endStr.split('T')[0]}`;
+                    var { startIso, endIso, currentValue, driverValue } = newFunctiontest(fetchInfo, savedView);
+
+                    const url = `/AppointmentDetails?handler=Appointments&start=${encodeURIComponent(startIso)}&end=${encodeURIComponent(endIso)}&sharedMessage=${encodeURIComponent(currentValue)}&driverName=${encodeURIComponent(driverValue)}`;
+
                     getAppDateDetails(fetchInfo, successCallback, url);
                 },
             }
@@ -156,22 +163,43 @@ function newFunction() {
         },
         eventClick: function (info) {
             const e = info.event;
-           
             const modal = document.getElementById('eventModal');
-
             document.getElementById('m-title').innerText = e.title;
             document.getElementById('m-date').innerText = e.start.toDateString();
             document.getElementById('m-location').innerText = /* "📍 " */  (escapeHtml(e.extendedProps.driverName) || ' ');
-            document.getElementById('m-start').innerText = (escapeHtml(formatTime(e.start ))|| ' ');
-            document.getElementById('m-end').innerText = (escapeHtml(formatTime(e.end ))|| ' ');
+            document.getElementById('m-start').innerText = (escapeHtml(formatTime(e.start)) || ' ');
+            document.getElementById('m-end').innerText = (escapeHtml(formatTime(e.end)) || ' ');
             document.getElementById('m-description').innerText = (escapeHtml(e.extendedProps.doctorAddress)) || ' ';
-
             modal.style.display = 'flex';
-         
-
         }
     });
 }
+function newFunctiontest(fetchInfo, savedView) {
+    const currentValue = document.getElementById("SharedMessage").value;
+    const driverValue = document.getElementById("msgDriverName").value;
+    let targetStart = new Date(fetchInfo.start);
+    let targetEnd = new Date(fetchInfo.end);
+    if (typeof ec !== 'undefined' && ec.getView) {
+        let currentView = ec.getView();
+        if (currentView.type === 'dayGridMonth') {
+            let midpoint = new Date(targetStart.getTime() + (targetEnd.getTime() - targetStart.getTime()) / 2);
+            let currentYear = midpoint.getFullYear();
+            let currentMonth = midpoint.getMonth();
+            targetStart = new Date(currentYear, currentMonth, 1);
+            targetEnd = new Date(currentYear, currentMonth + 1, 1);
+        }
+    } else if (savedView === 'dayGridMonth') {
+        let midpoint = new Date(targetStart.getTime() + (targetEnd.getTime() - targetStart.getTime()) / 2);
+        let currentYear = midpoint.getFullYear();
+        let currentMonth = midpoint.getMonth();
+        targetStart = new Date(currentYear, currentMonth, 1);
+        targetEnd = new Date(currentYear, currentMonth + 1, 1);
+    }
+    let startIso = targetStart.toISOString().split('T')[0]; // Format: YYYY-MM-DD
+    let endIso = targetEnd.toISOString().split('T')[0];
+    return { startIso, endIso, currentValue, driverValue };
+}
+
 function closeModal() {
     modal.style.display = 'none';
 }
@@ -225,33 +253,6 @@ function newFunction_2(dpDepart, dpAppt, title, event) {
             <strong>📍Address:</strong> ${event.extendedProps.doctorAddress || ''}
         </span>`
     };
-}
-
-function getAppDateDetailsForPrint() {
-    const currentView = ec.getView();
-    const formatDateLocal = (dateObj) => {
-        const d = new Date(dateObj);
-        const month = '' + (d.getMonth() + 1);
-        const day = '' + d.getDate();
-        const year = d.getFullYear();
-        return [year, month.padStart(2, '0'), day.padStart(2, '0')].join('-');
-    };
-
-    const startStr = formatDateLocal(currentView.activeStart);
-    const endStr = formatDateLocal(currentView.activeEnd);
-
-    const url = `/AppointmentDetails?handler=GetAppointments&start=${startStr}&end=${endStr}`;
-    return fetch(url)
-        .then(res => res.json())
-        .then(data => {
-            if (!Array.isArray(data)) return [];
-
-            return data.filter(event => {
-                const isInHouse = event.extendedProps?.inhouse || event.inhouse;
-                return !isInHouse || checkbox1.checked;
-            });
-        })
-        .catch(() => []);
 }
 
 async function printAppointmentTable() {
@@ -391,38 +392,67 @@ async function printAppointmentTable() {
 
 async function getAppDateDetailsForPrint() {
     try {
-        const start = ec.getView().activeStart
-            .toISOString()
-            .split("T")[0];
+        // 1. Guard clause: Ensure the calendar instance exists before doing anything
+        if (typeof ec === 'undefined' || !ec.getView) {
+            throw new Error("Calendar instance 'ec' is not initialized.");
+        }
 
-        const end = ec.getView().activeEnd
-            .toISOString()
-            .split("T")[0];
+        const currentView = ec.getView();
+        let targetStart = new Date(currentView.activeStart);
+        let targetEnd = new Date(currentView.activeEnd);
 
-        const response = await fetch(
-            `/AppointmentDetails?handler=GetAppointments&start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`
-        );
+        // 2. Adjust dates if viewing a full month grid
+        if (currentView.type === 'dayGridMonth') {
+            const midpoint = new Date(targetStart.getTime() + (targetEnd.getTime() - targetStart.getTime()) / 2);
+            const currentYear = midpoint.getFullYear();
+            const currentMonth = midpoint.getMonth();
 
+            targetStart = new Date(currentYear, currentMonth, 1);
+            targetEnd = new Date(currentYear, currentMonth + 1, 1);
+        }
+
+        // 3. Helper to format 'YYYY-MM-DD' using local time to prevent timezone shifting
+        const formatLocalDate = (date) => {
+            const offset = date.getTimezoneOffset();
+            const localizedDate = new Date(date.getTime() - (offset * 60 * 1000));
+            return localizedDate.toISOString().split('T')[0];
+        };
+
+        const startIso = formatLocalDate(targetStart);
+        const endIso = formatLocalDate(targetEnd);
+
+        // 4. Safely extract DOM values with fallbacks
+        const sharedMessage = document.getElementById("SharedMessage")?.value || "";
+        const driverName = document.getElementById("msgDriverName")?.value || "";
+        const isCheckboxChecked = document.getElementById("ShowInhouse")?.checked || false; // Assuming checkbox1 is an ID
+
+        // 5. Build URL using URLSearchParams to handle automatic encoding
+        const params = new URLSearchParams({
+            handler: 'Appointments',
+            start: startIso,
+            end: endIso,
+            sharedMessage: sharedMessage,
+            driverName: driverName
+        });
+
+        // 6. Fetch and handle response
+        const response = await fetch(`/AppointmentDetails?${params.toString()}`);
         if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
 
         const data = await response.json();
-
         if (!Array.isArray(data)) {
             return [];
         }
 
+        // 7. Filter results cleanly using optional chaining
         return data.filter(event => {
-            const isInHouse =
-                event.extendedProps?.inhouse ??
-                event.inhouse ??
-                false;
-
-            return !isInHouse || checkbox1.checked;
+            const isInHouse = event.extendedProps?.inhouse ?? event.inhouse ?? false;
+            return !isInHouse || isCheckboxChecked;
         });
     } catch (error) {
-        console.error("Appointment fetch failed:", error);
+        console.error("Appointment fetch failed:", error.message);
         return [];
     }
 }
@@ -478,6 +508,6 @@ document.getElementById("go-button").addEventListener("click", () => {
     const year = parseInt(yearSelect.value, 10);
     const month = parseInt(monthSelect.value, 10);
 
-// Move calendar to selected month/year
+    // Move calendar to selected month/year
     ec.setOption("date", new Date(year, month, 1));
 });
