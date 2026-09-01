@@ -300,8 +300,8 @@ tr:nth-child(even) {
     
     $(document).ready(function () {
         //doResize('permissions');
-        var firstGroupID = @Model.lstGroups.FirstOrDefault()?.GroupID ?? 0;
-        if(firstGroupID !=0) {
+        var firstGroupID = @(Model.lstGroups.FirstOrDefault()?.GroupID ?? 0);
+        if(firstGroupID != 0) {
             GroupItemClick(firstGroupID);
         }
     });

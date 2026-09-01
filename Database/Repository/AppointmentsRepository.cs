@@ -1,12 +1,13 @@
-﻿using Dapper;
+﻿using Appointments.Database.Context;
+using Appointments.Database.Dto;
+using Appointments.Database.Interfaces;
+using Dapper;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Appointments.Database.Context;
-using Appointments.Database.Dto;
-using Appointments.Database.Interfaces;
 
 namespace Appointments.Database.Repository
 {
@@ -182,8 +183,9 @@ namespace Appointments.Database.Repository
                     ,[InHouseVisit]
                     ,[NursesAideAccompaniment]
                     ,[ApptType]
-                    FROM [dbo].[qryAppointmentsChina]";
+                    FROM [dbo].[qryAppointmentsChina]"; 
                 if (sFilter is not null && sFilter.Trim().Length > 0) query += " WHERE " + sFilter;
+                query += " ORDER BY CAST([ApptTime] AS DATE) ASC, CAST([ApptTime] AS TIME) ASC, FullName,DoctorName";
                 Task<IEnumerable<AppointmentDto>> appointments = connection.QueryAsync<AppointmentDto>(query);
                 return appointments.Result.ToList();
             }

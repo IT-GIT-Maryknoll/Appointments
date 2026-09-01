@@ -250,14 +250,15 @@ namespace Appointments.Pages
             OnGet();
             }
 
-        public async Task<JsonResult> OnGetGetAppointments()
+        public async Task<JsonResult> OnGetGetAppointments(int year, int month)
             {
             string sMsg = "";
             //GetFilterIn();
             sFilter=HttpContext.Session.GetString("sFilter");
-            if(sFilter==null)
-                GetFilterIn();
-            lstAppointments=_appointmentsData.LoadAppointments(sFilter,out sMsg);
+            if (sFilter==null) GetFilterIn();
+            string sFilterMonth = sFilter.Replace(sFilter.Substring(sFilter.IndexOf("= YEAR"), 20), "= " + year).Replace(sFilter.Substring(sFilter.IndexOf("= MONTH"), 21), "= " + month);
+
+            lstAppointments=_appointmentsData.LoadAppointments(sFilterMonth,out sMsg);
             if((TempData["Message"]==null||(TempData["Message"]?.ToString()?.Length??0)==0)&&sMsg!=null&&sMsg.Trim().Length>0)
                 TempData["Message"]=sMsg;
             else
@@ -271,9 +272,10 @@ namespace Appointments.Pages
                 //log error
                 }
             var list = new List<object>();
+            HttpContext.Session.SetString("Appts", JsonSerializer.Serialize(lstAppointments));
 
-            foreach(var item in lstAppointments)
-                {
+            foreach (var item in lstAppointments)
+            {
                 var dpt = "";
                 var color = "";
                 switch(item.ApptType)
@@ -309,16 +311,160 @@ namespace Appointments.Pages
                     End = "",
                     EventID = item.ID,
                     IsFullDay = false,
-                    Subject = $"<span style='font-size:16px;color:black;'><span style=' font-weight:bold; text-decoration: underline;'>{((DateTime)item.ApptTm).ToShortTimeString()} {item.FullName}<br/> - {item.DoctorName}</span><br/><span style='font-style:normal;'>{item.City},<br/> {item.Phone} {item.ApptType}<br/>{item.DriverName} Depart {dpt}</span><br/></span>",
+                    //Subject = $"<span style='font-size:16px;color:black;'><span style=' font-weight:bold; text-decoration: underline;'>{((DateTime)item.ApptTm).ToShortTimeString()} {item.FullName}<br/> - {item.DoctorName}</span><br/><span style='font-style:normal;'>{item.City},<br/> {item.Phone} {item.ApptType}<br/>{item.DriverName} Depart {dpt}</span><br/></span>",
+                    Subject = $"<span style=' font-weight:bold; text-decoration: underline;font-size:16px;color:black;'>{((DateTime)item.ApptTm).ToShortTimeString()} {item.FullName} <br />Dr: - {item.DoctorName}</span><br /><span style='font-size:16px;color:black;'>{item.Phone} {item.ApptType}<br />Driver: {item.DriverName}<br /> Depart: {dpt}</span>",
                     Start = item.ApptTime==null ? "" : String.Format("{0:u}",((DateTime)item.ApptTime).AddDays(1)),
                     ThemeColor = color
                     };
                 list.Add(displayEvent);
-                }
-
+             }
             return new JsonResult(list.ToArray());
+         }
+        public async Task<JsonResult> OnGetGetAppointmentsDay(int year, int month, int day)
+        {
+            string sMsg = "";
+            //GetFilterIn();
+            sFilter = HttpContext.Session.GetString("sFilter");
+            if (sFilter == null)     GetFilterIn();
+            string sFilterDay = sFilter.Replace(sFilter.Substring(sFilter.IndexOf("= YEAR"), 20), "= " + year).Replace(sFilter.Substring(sFilter.IndexOf("= MONTH"), 21), "= " + month) + " AND DAY([ApptTime]) = " + day.ToString();
+            //string sFilterDay = sFilter + (sFilter.Length > 0 ? " and " : "") + " DAY([ApptTime]) = " + day.ToString();
+            lstAppointments = _appointmentsData.LoadAppointments(sFilterDay, out sMsg);
+            if ((TempData["Message"] == null || (TempData["Message"]?.ToString()?.Length ?? 0) == 0) && sMsg != null && sMsg.Trim().Length > 0)
+                TempData["Message"] = sMsg;
+            else
+                TempData["Message"] += sMsg;
+            sMsg = "";
+
+            if (lstAppointments == null || lstAppointments.Count == 0)
+            {
+                return new JsonResult(new List<object>());
+
+                //log error
+            }
+            var list = new List<object>();
+            HttpContext.Session.SetString("Appts", JsonSerializer.Serialize(lstAppointments));
+
+            foreach (var item in lstAppointments)
+            {
+                var dpt = "";
+                var color = "";
+                switch (item.ApptType)
+                {
+                    case "Follow-up":
+                        color = "#c4eda9";  // "#378006";
+                        break;
+
+                    case "Consult":
+                        color = "#afd5f5"; // "#0078D7";
+                        break;
+
+                    case "In-house":
+                        color = "#ffcd90";  // "#FF8C00";
+                        break;
+
+                    case "Diagnostic":
+                        color = "#ffabb3";  // "#9B111E";
+                        break;
+
+                    default:
+                        color = "#c7c7c7";  // "#434343";
+                        break;
+                }
+                if (item.ApptTime == null)
+                    item.ApptTime = DateTime.MinValue;
+                if (item.Depart.HasValue)
+                    dpt = ((DateTime)item.Depart).ToShortTimeString();
+                var displayEvent = new
+                {
+                    //Description = $"<span style='font-size:16px;'>{((DateTime)item.ApptTime).ToShortTimeString()} {item.FullName}<br/> - {item.DoctorName}<br/>{item.City},<br/> {item.Phone} {item.ApptType}<br/>{item.DriverName} Depart {dpt}<br/></span>",
+                    //Description=$"abc",
+                    End = "",
+                    EventID = item.ID,
+                    IsFullDay = false,
+                    //Subject = $"<span style='font-size:16px;color:black;'><span style=' font-weight:bold; text-decoration: underline;'>{((DateTime)item.ApptTm).ToShortTimeString()} {item.FullName}<br/> - {item.DoctorName}</span><br/><span style='font-style:normal;'>{item.City},<br/> {item.Phone} {item.ApptType}<br/>{item.DriverName} Depart {dpt}</span><br/></span>",
+                    Subject = $"<span style=' font-weight:bold; text-decoration: underline;font-size:16px;color:black;'>{((DateTime)item.ApptTm).ToShortTimeString()} {item.FullName} <br />Dr: - {item.DoctorName}</span><br /><span style='font-size:16px;color:black;'>{item.Phone} {item.ApptType}<br />Driver: {item.DriverName}<br /> Depart: {dpt}</span>",
+                    Start = item.ApptTime == null ? "" : String.Format("{0:u}", ((DateTime)item.ApptTime).AddDays(1)),
+                    ThemeColor = color
+                };
+                list.Add(displayEvent);
             }
 
+            return new JsonResult(list.ToArray());
+        }
+        public async Task<JsonResult> OnGetGetAppointmentsWeek(int year, int month, int day)
+        {
+            string sMsg = "";
+            //GetFilterIn();
+            sFilter = HttpContext.Session.GetString("sFilter");
+            if (sFilter == null) GetFilterIn();
+            DateTime dtEnd = new DateTime(year, month, day);
+            while ((int)dtEnd.DayOfWeek < 6) dtEnd = dtEnd.AddDays(1);
+            DateTime dtStart = dtEnd.AddDays(-6);
+            string sReplacementString = " [ApptTime] between '" + dtStart.ToString("yyyy-MM-dd") + "' and '" + dtEnd.ToString("yyyy-MM-dd") + "'";
+            //string sFilterReplace = sFilter.Substring(sFilter.IndexOf("MONTH"), 81) + " AND " + sFilter.Substring(sFilter.IndexOf("= MONTH"), 21);
+            string sFilterWeek = sFilter.Replace(sFilter.Substring(sFilter.IndexOf("MONTH"), 81), sReplacementString);
+            lstAppointments = _appointmentsData.LoadAppointments(sFilterWeek, out sMsg);
+            if ((TempData["Message"] == null || (TempData["Message"]?.ToString()?.Length ?? 0) == 0) && sMsg != null && sMsg.Trim().Length > 0)
+                TempData["Message"] = sMsg;
+            else
+                TempData["Message"] += sMsg;
+            sMsg = "";
+            
+            if (lstAppointments == null || lstAppointments.Count == 0)
+            {
+                return new JsonResult(new List<object>());
+
+                //log error
+            }
+            var list = new List<object>();
+            HttpContext.Session.SetString("Appts", JsonSerializer.Serialize(lstAppointments));
+            foreach (var item in lstAppointments)
+            {
+                var dpt = "";
+                var color = "";
+                switch (item.ApptType)
+                {
+                    case "Follow-up":
+                        color = "#c4eda9";  // "#378006";
+                        break;
+
+                    case "Consult":
+                        color = "#afd5f5"; // "#0078D7";
+                        break;
+
+                    case "In-house":
+                        color = "#ffcd90";  // "#FF8C00";
+                        break;
+
+                    case "Diagnostic":
+                        color = "#ffabb3";  // "#9B111E";
+                        break;
+
+                    default:
+                        color = "#c7c7c7";  // "#434343";
+                        break;
+                }
+                if (item.ApptTime == null)
+                    item.ApptTime = DateTime.MinValue;
+                if (item.Depart.HasValue)
+                    dpt = ((DateTime)item.Depart).ToShortTimeString();
+                var displayEvent = new
+                {
+                    //Description = $"<span style='font-size:16px;'>{((DateTime)item.ApptTime).ToShortTimeString()} {item.FullName}<br/> - {item.DoctorName}<br/>{item.City},<br/> {item.Phone} {item.ApptType}<br/>{item.DriverName} Depart {dpt}<br/></span>",
+                    //Description=$"abc",
+                    End = "",
+                    EventID = item.ID,
+                    IsFullDay = false,
+                    //Subject = $"<span style='font-size:16px;color:black;'><span style=' font-weight:bold; text-decoration: underline;'>{((DateTime)item.ApptTm).ToShortTimeString()} {item.FullName}<br/> - {item.DoctorName}</span><br/><span style='font-style:normal;'>{item.City},<br/> {item.Phone} {item.ApptType}<br/>{item.DriverName} Depart {dpt}</span><br/></span>",
+                    Subject = $"<span style=' font-weight:bold; text-decoration: underline;font-size:16px;color:black;'>{((DateTime)item.ApptTm).ToShortTimeString()} {item.FullName} <br />Dr: - {item.DoctorName}</span><br /><span style='font-size:16px;color:black;'>{item.Phone} {item.ApptType}<br />Driver: {item.DriverName}<br /> Depart: {dpt}</span>",
+                    Start = item.ApptTime == null ? "" : String.Format("{0:u}", ((DateTime)item.ApptTime).AddDays(1)),
+                    ThemeColor = color
+                };
+                list.Add(displayEvent);
+            }
+
+            return new JsonResult(list.ToArray());
+        }
         public JsonResult OnGetGetAppointmentById(int id)
             {
             string sMsg = "";
@@ -541,7 +687,7 @@ namespace Appointments.Pages
             }
 
         private string GetIpValue()
-            {
+        {
             var host = Dns.GetHostEntry(Dns.GetHostName());
             foreach(var ip in host.AddressList)
                 {
@@ -551,6 +697,16 @@ namespace Appointments.Pages
                     }
                 }
             return "";
+        }
+        public JsonResult OnGetAppointmentsList()
+        {
+            List<AppointmentDto> lstAppointments = JsonSerializer.Deserialize<List<AppointmentDto>>(HttpContext.Session.GetString("Appts")) ;
+            if (lstAppointments == null || lstAppointments.Count == 0)
+            {
+                return new JsonResult(new List<object>());
+                //log error
             }
+            return new JsonResult(lstAppointments);
         }
     }
+}

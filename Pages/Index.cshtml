@@ -65,7 +65,7 @@
     <tr>
     <td style="vertical-align:top;width:10%;padding:5px;">
         <table style="margin: 5px; background-color:lightgoldenrodyellow;">
-                <tr><td colspan="2" style="font-weight:bold; color: #336699;"><h4>Select Search Criteria</h4></td></tr>
+                <tr><td colspan="2" style="font-weight:bold; color: #336699;"><h4>Search Criteria</h4></td></tr>
             <tr><td><label id="lblDate">Date:</label></td><td><input type="month" id="dtpSelector" name="lblDate" required="required" value="@Model.lblDate" /></td></tr>
                 <tr>
                     <td><label id="lblResident">Resident:</label></td>
@@ -378,6 +378,7 @@
     <script>
         var appts = []; var strDate = '';
             var bEditPage = @bEdit.ToString().ToLower();
+            var sView = "month";
 
         $(document).ready(function () {
 
@@ -396,7 +397,7 @@
                 $.ajax({
                     type: "GET",
                     url: "Index?handler=GetAppointments",
-                   // data: { },
+                    data: { year: year, month: month},
                     success: function (data) {
                         appts = [];
                         $.each(data, function (i, v) {
@@ -410,14 +411,73 @@
                                 allDay: v.isFullDay
                             });
                         });
-                        GenerateCalendar(appts, new Date(year, month - 1));
+                        if(typeof  $('#calendar').fullCalendar.render === 'function') {
+                            $('#calendar').fullCalendar('removeEvents'); // Clear old events
+                            $('#calendar').fullCalendar('addEventSource', appts); // Add new events
+                       }
+                       else   GenerateCalendar(appts, new Date(year, month - 1), "month");
                     },
                     error: function (error) {
                         alert(error.responseText.substring(0, error.responseText.indexOf('\n')).replace("System.SystemException:", ""));
                     }
                });
             }
+             function FetchEventAndRenderCalendarDay(year, month, day) {
+                $.ajax({
+                    type: "GET",
+                    url: "Index?handler=GetAppointmentsDay",
+                    data: { year: year, month: month, day: day },
+                    success: function (data) {
+                        appts = [];
+                        $.each(data, function (i, v) {
+                            appts.push({
+                                eventID: v.eventID,
+                                title: v.subject,
+                                description: v.description,
+                                start: moment(v.start),
+                                end: null,
+                                color: v.themeColor,
+                                allDay: v.isFullDay
+                            });
+                        });
+                    $('#calendar').fullCalendar('removeEvents'); // Clear old events
+                    $('#calendar').fullCalendar('addEventSource', appts); // Add new events
 
+                        //GenerateCalendar(appts, new Date(year, month - 1));
+                    },
+                    error: function (error) {
+                        alert(error.responseText.substring(0, error.responseText.indexOf('\n')).replace("System.SystemException:", ""));
+                    }
+                });
+            }
+             function FetchEventAndRenderCalendarWeek(year, month, day) {
+                $.ajax({
+                    type: "GET",
+                    url: "Index?handler=GetAppointmentsWeek",
+                    data: { year: year, month: month, day: day },
+                    success: function (data) {
+                        appts = [];
+                        $.each(data, function (i, v) {
+                            appts.push({
+                                eventID: v.eventID,
+                                title: v.subject,
+                                description: v.description,
+                                start: moment(v.start),
+                                end: null,
+                                color: v.themeColor,
+                                allDay: v.isFullDay
+                            });
+                        });
+                    $('#calendar').fullCalendar('removeEvents'); // Clear old events
+                    $('#calendar').fullCalendar('addEventSource', appts); // Add new events
+
+                        //GenerateCalendar(appts, new Date(year, month - 1));
+                    },
+                    error: function (error) {
+                        alert(error.responseText.substring(0, error.responseText.indexOf('\n')).replace("System.SystemException:", ""));
+                    }
+                });
+            }
             function SetCurrentDateToSelector() {
                 let date = new Date();
                 let month = date.getMonth() + 1;
@@ -433,16 +493,6 @@
    
              var sCust = "";
             function GenerateCalendar(appts, date) {
-                var sView = "month"; 
-                if ($('#calendar').fullCalendar('getCalendar').view) {
-                    //if (appts.buttonText == 'month') { sView = 'month'; alert(sView); }
-                    //else {
-                    /*alert("cur cust - " + sCust);*/
-                    if (sCust == "") { sView = $('#calendar').fullCalendar('getCalendar').view.name; }
-                    else sCust = "";
-                    //}
-                    
-                }
                 $('#calendar').fullCalendar('destroy');
                 $('#calendar').fullCalendar({
                     contentHeight: gridHeight(),  //600,
@@ -451,7 +501,14 @@
                     timeFormat: 'h(:mm)a',
                     displayEventTime: false,
                     defaultView: sView,
+                    eventOrder: 'start',
                     customButtons: {
+                        prev: {
+                                 text: '<',    click: function () {  $('#calendar').fullCalendar('prev'); updateYearMonth();}
+                        },
+                        next: {
+                                  text: '>',    click: function () { $('#calendar').fullCalendar('next'); updateYearMonth(); }
+                         },
                         today: {
                             text: 'today',
                             click: function () {
@@ -465,21 +522,45 @@
                         month: {
                             text: 'month',
                             click: function () {
-                                let date = $('#calendar').fullCalendar('getDate');
-                                /*alert('cust'); */sCust = "cust";
+                                sCust = "cust";
                                 sView = 'month';
+                                $('#calendar').fullCalendar( 'changeView',  'month' );
                                 updateYearMonth();
                                 //$('#calendar').fullCalendar('getCalendar').defaultView = 'month';
                                 //FetchEventAndRenderCalendar(date._d.getFullYear(), date._d.getMonth() + 2);
                             }
                         },
-                    },
+                         basicDay: {
+                                text: 'day',
+                                click: function () {
+                                 sView = 'basicDay';
+                                 $('#calendar').fullCalendar( 'changeView',  'basicDay' );
+                                 updateYearMonth();
+                                }
+                            },
+                            basicWeek: {
+                            text: 'week',
+                            click: function () {
+                                let date = $('#calendar').fullCalendar('getDate');
+                                sView = 'basicWeek';
+                                $('#calendar').fullCalendar( 'changeView',  'basicWeek' );
+                               updateYearMonth();
+                            }
+                        },
+                        print: {
+                            text: 'print',
+                            click: function () {
+                                printAppointmentTable();
+                            }
+                        },
+                     },
                     header: {
-                        left: 'prev,next,today',
+                        left: 'prev,next,today,print',
                         center: 'title',
-                        right: 'month,listMonth'     /* ,basicWeek,basicDay */
+                        right: 'month,basicWeek,basicDay,listMonth,listWeek,listDay'     /* ,basicWeek,basicDay */
                     },
                     eventLimit: 100,
+                    eventOrder: 'start',
                     eventRender: function (event, element, view) {
                         var title = "";
                         if (typeof element.find('.fc-title')[0] === 'object') {
@@ -614,14 +695,55 @@
 
                     }
                 });
+                   $('#calendar').fullCalendar( 'changeView', sView );
+                   document.querySelector('.fc-listWeek-button').style.display = 'none';
+                   document.querySelector('.fc-listDay-button').style.display = 'none';
+                   document.querySelector('.fc-listMonth-button').style.display = 'none';
+                   switch (sView) {
+                       case 'month':
+                           document.querySelector('.fc-listMonth-button').style.display = 'inline-block';
+                           break;
+                       case 'basicWeek':
+                           document.querySelector('.fc-listWeek-button').style.display = 'inline-block';
+                           break;
+                       case 'basicDay':
+                           document.querySelector('.fc-listDay-button').style.display = 'inline-block';
+                           break;
+                   }
+                   if(date.getMonth() == new Date().getMonth() && sView == 'month') {
+                        $('#calendar').fullCalendar('gotoDate', new Date());    
+                   }
             }
 
-                $('body').on('click', 'button.fc-prev-button', function () {
-                      updateYearMonth(); $('#btnSearch').click();
-               });
+                   function updateYearMonth() {
+                        let date = $('#calendar').fullCalendar('getDate');
+                        let strdate = date.toISOString();
+                        let ardate = strdate.split('-');
+                        let year = parseInt(ardate[0]);
+                        let month =  parseInt(ardate[1]);
+                        if (month < 10)   month = "0" + month;
+                        let day =  parseInt(ardate[2]) ; 
+                       let nDate = year + '-' + month;
+                       if(nDate != $('#dtpSelector').val()) {
+                           $('#dtpSelector').val(nDate);
+                       }
+                       switch (sView) {
+                           case 'month':
+                                   FetchEventAndRenderCalendar(year, month);
+                               break;
+                           case 'basicWeek':
+                                   FetchEventAndRenderCalendarWeek(year, month, day);
+                               break;
+                           case 'basicDay':
+                                   FetchEventAndRenderCalendarDay(year, month, day);
+                               break;
+                       }
+                       return false;
+                   }
 
-               function updateYearMonth() {
-                   let date = $('#calendar').fullCalendar('getDate');
+               function updateYearMonthBACK() {
+                  let date = $('#calendar').fullCalendar('getDate');
+
                    let year = date._d.getFullYear();
                    let month = date._d.getMonth() + 2;
                    if (month > 12) {
@@ -632,12 +754,17 @@
                    if (month < 10) {
                        month = "0" + month;
                    }
-
                    let nDate = year + '-' + month;
-                   $('#dtpSelector').val(nDate);
-                   FetchEventAndRenderCalendar(year, month);
+                   if(nDate != $('#dtpSelector').val()) {
+                       $('#dtpSelector').val(nDate);
+                   }
                }
-                  $('body').on('click', 'button.fc-next-button', function () {updateYearMonth(); $('#btnSearch').click();});
+               //  $('body').on('click', 'button.fc-prev-button', function () {
+               //        updateYearMonth(); //$('#btnSearch').click();
+               // });
+               // $('body').on('click', 'button.fc-next-button', function () {
+               //        updateYearMonth(); //$('#btnSearch').click();
+               //  });
 
       });
             function ChangeFilter(txb){
@@ -864,5 +991,163 @@
         }
     }
 
-     </script>
-}
+
+     async function printAppointmentTable() {
+            const titleText =
+                document.querySelector(".ec-title")?.textContent?.trim() ||
+                "Appointments";
+
+            const printWindow = window.open("", "_blank");
+
+            if (!printWindow) {
+                alert("Popup blocked. Please allow popups to print.");
+                return;
+            }
+
+            try {
+                const data = await fetch("index?handler=AppointmentsList", {
+                    method: 'GET', 
+                headers: { 'Content-Type': 'application/json'  }
+                 }); 
+            if (!data.ok) {
+                throw new Error(`HTTP ${data.status}: ${data.statusText}`);
+            }
+
+            const events = await data.json();
+            if (!Array.isArray(events)) {
+                return [];
+            }
+                const rows = events.map(event => {
+                const departDate = new Date(event.depart);
+                    const apptDate = event.apptTm
+                        ? (new Date(event.apptTm)).toLocaleDateString() + "<br/>" + formatTime(new Date(event.apptTm))
+                        : null;
+
+                    return `
+                        <tr>
+                            <td>${escapeHtml(apptDate)}</td>
+                            <td>${escapeHtml(formatTime(departDate))}</td>
+                            <td>${escapeHtml(event.fullName)}</td>
+                            <td>${escapeHtml(event.doctorName)}</td>
+                            <td>${escapeHtml(event.driverName)}</td>
+                            <td>${escapeHtml(event.phone)}</td>
+                            <td>${escapeHtml(event.street + " " + event.city)}</td>
+                        </tr>
+                    `;
+                }).join("");
+
+                const html = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>${escapeHtml(titleText)}</title>
+                    <style>
+                        body {
+                            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+                            margin: 20px;
+                            color: #333;
+                        }
+
+                        h2 {
+                            text-align: center;
+                            margin-bottom: 5px;
+                        }
+
+                        h3 {
+                            text-align: center;
+                            font-weight: normal;
+                            margin-top: 0;
+                            color: #666;
+                        }
+
+                        table {
+                            width: 100%;
+                            border-collapse: collapse;
+                            margin-top: 20px;
+                        }
+
+                        th, td {
+                            border: 1px solid #ddd;
+                            padding: 8px;
+                            text-align: left;
+                            vertical-align: top;
+                            font-size: 12px;
+                        }
+
+                        th {
+                            background: #f5f5f5;
+                        }
+
+                        .date-cell {
+                            white-space: nowrap;
+                            font-weight: 600;
+                        }
+
+                        td:last-child {
+                            max-width: 300px;
+                            word-break: break-word;
+                        }
+
+
+                    </style>
+                </head>
+                <body>
+                    <h2>${escapeHtml(titleText)}</h2>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date Time</th>
+                                <th>Depart Time</th>
+                                <th>Resident</th>
+                                <th>Doctor</th>
+                                <th>Driver</th>
+                                <th>Phone</th>
+                                <th>Address</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                             ${rows}
+                        </tbody>
+                    </table>
+                </body>
+                </html>`;
+
+                printWindow.document.open();
+                printWindow.document.write(html);
+                printWindow.document.close();
+
+                printWindow.onload = () => {
+                    printWindow.focus();
+                    printWindow.print();
+                    printWindow.close();
+                };
+            } catch (error) {
+                console.error("Print failed:", error);
+                printWindow.close();
+                alert("Unable to generate appointment report.");
+            }
+        }
+        function escapeHtml(html) {
+            var txt = document.createElement("textarea");
+            txt.innerHTML = html;
+            return txt.value;
+        }
+        function formatDate(date) {
+            if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
+                return "";
+            }
+        }
+                function formatTime(date) {
+            if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
+                return "";
+            }
+
+            return date.toLocaleTimeString("en-US", {
+                hour: "numeric",
+                minute: "2-digit",
+                hour12: true
+            });
+        }
+        </script>
+        }

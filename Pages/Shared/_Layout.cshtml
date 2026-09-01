@@ -148,7 +148,7 @@
                 <table border="0" cellpadding="0" cellspacing="0" style="text-align:left;">
                     <tr>
                         <td style="text-align:center;">
-                    <h3 style="display: inline-block; color: #336699; font-weight:bold; font-family: 'Montserrat',Helvetica,Arial,Lucida,sans-serif; padding-left: 80px; ">Society Health Service Appts</h3>
+                    <h3 style="display: inline-block; color: #336699; font-weight:bold; font-family: 'Montserrat',Helvetica,Arial,Lucida,sans-serif; padding-left: 80px; ">Society Health Service Appointments</h3>
 
                     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                         <span class="navbar-toggler-icon"></span>
@@ -169,25 +169,25 @@
                                 }
                             }
                      }
-@*                     <li class="nav-item">
+                                                    @*                     <li class="nav-item">
                             <a class="nav-link" href="#" onclick="navigateScreen('Index');"><div class="fntsize">Appointments</div></a>
                          </li>
                         <li class="nav-item">
                             <a class="nav-link" href="#" onclick="navigateScreen('Doctors');"><div class="fntsize">Doctors</div></a>
                         </li> *@
-@*                         <li class="nav-item">
+                                                    @*                         <li class="nav-item">
                             <a class="nav-link" href="#" onclick="navigateScreen('Residents');"><span class="fntsize">Residents</span></a>
                         </li>
                             <li class="nav-item">
                             <a class="nav-link" href="#" onclick="navigateScreen('Nurses');"><span class="fntsize">Nurses</span></a>
                             </li> *@
-@*                             <li class="nav-item">
+                                                    @*                             <li class="nav-item">
                                 <a class="nav-link" href="#" onclick="navigateScreen('Drivers');"><span class="fntsize">Drivers</span></a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link" href="#" onclick="navigateScreen('Cars');"><span class="fntsize">Cars</span></a>
                             </li>
- *@                       
+ *@                     
                         @if (Model?.IsAdmin)
                         {
                             <li class="nav-item dropdown" style="display:inline-block;">
@@ -233,9 +233,9 @@
                             </td>
                         </tr>
                         <tr height="21px;">
-                            <td style="width: 100px; background-color: #EEE1D1;  text-align: left; padding-left: 10px;color:chocolate; font-weight:bold;">@Model.UserInfo.DisplayName </td>
+                            <td style="width: 200px; background-color: #EEE1D1;  text-align: left; padding-left: 10px;color:chocolate; font-weight:bold;">@Model.UserInfo.DisplayName </td>
                             <td style="background-color: #EEE1D1; text-align: center; padding-left: 10px; padding-right:10px; ">
-                                 @if (TempData["Message"] != null)
+                                @if (TempData["Message"] != null)
                                 {
                                     if (TempData["Message"].ToString().StartsWith("ERROR"))
                                     {
@@ -248,7 +248,10 @@
                                     TempData.Remove("Message");
                                 }
                                 else
-                                { <div id="msg">&nbsp;</div>}
+                                {
+
+                                    <div id="msg">&nbsp;</div>
+                                }
                             </td>
                             <td style="white-space:nowrap; background-color: #EEE1D1; text-align: right; padding-right: 10px; color:chocolate; font-weight:bold;">
                             </td>
