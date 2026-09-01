@@ -46,6 +46,9 @@ document.addEventListener('DOMContentLoaded', function () {
     // Render calendar for the first time
     loadDriversScheduleCalendar();
 
+    let targetDate = new Date();
+    // ec.gotoDate('2026-08-20');
+    ec.gotoDate(targetDate);
     // Trigger re-render when standard checkbox changes
     if (checkbox) { // Added a quick safety check
         checkbox.addEventListener('change', (e) => {
@@ -66,17 +69,20 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 function loadDriversScheduleCalendar() {
-    let savedView = window.innerWidth < 600 ? 'listWeek' : 'dayGridMonth';
+    let savedView = window.innerWidth < 600 ? 'listWeek' : 'listWeek';
     let savedDate = new Date();
     if (ec) {
         savedView = ec.getOption('view');
         savedDate = ec.getOption('date');
         ec.destroy();
     }
-    ec = new EventCalendar(document.getElementById('calendar'), {
+    ec = EventCalendar.create(document.getElementById('calendar'), {
         view: savedView,
         date: savedDate,
-        height: '100%',
+        listDayFormat: { weekday: 'long' },
+        listDaySideFormat: { year: 'numeric', month: 'long', day: 'numeric' },
+        // height: '100%',
+        height: '600px',
         firstday: 1,
         eventStartEditable: false,
         headerToolbar: {
@@ -172,9 +178,17 @@ function loadDriversScheduleCalendar() {
             document.getElementById('m-start').innerText = (escapeHtml(formatTime(e.start)) || ' ');
             document.getElementById('m-end').innerText = (escapeHtml(formatTime(e.end)) || ' ');
             document.getElementById('m-description').innerText = (escapeHtml(e.extendedProps.doctorAddress)) || ' ';
+            document.getElementById('m-doctor').innerText = (escapeHtml(e.extendedProps.doctorName)) || ' ';
+            document.getElementById('m-nurseaid').innerText = (escapeHtml(e.extendedProps.nursesaid)) || ' ';
+            document.getElementById('m-wait').innerText = (escapeHtml(e.extendedProps.wait)) || ' ';
+            const safeMessage = (escapeHtml(e.extendedProps.notes)) || ' ';
+            if (document.getElementById('m-notes')) {
+                document.getElementById('m-notes').innerHTML = safeMessage;
+            }
             modal.style.display = 'flex';
         }
     });
+
 }
 function newFunctiontest(fetchInfo, savedView) {
     const currentValue = document.getElementById("SharedMessage").value;
@@ -233,6 +247,7 @@ function newFunction_1(start, title, event) {
             <strong>📝Resident:</strong> ${title}
             <strong>📍Doctor:</strong> ${event.extendedProps.doctorName || ''}
             <strong>💬Wait:</strong> ${event.extendedProps.wait || ''}
+            <strong>📝Nurse Aid:</strong> ${event.extendedProps.nursesaid || ''}
             <strong>📍Driver:</strong> ${event.extendedProps.driverName || ''}
         </span>
         <span class="ec-line">
@@ -248,7 +263,8 @@ function newFunction_2(dpDepart, dpAppt, title, event) {
             <strong>⏰ Depart:</strong> ${dpDepart} <strong>Appt:</strong> ${dpAppt}
             <strong>📝Resident:</strong> ${title}
             <strong>📍Doctor:</strong> ${event.extendedProps.doctorName || ''}
-            <strong>💬Wait:</strong> ${event.extendedProps.wait || ''}
+          <strong>💬Wait:</strong> ${event.extendedProps.wait || ''}
+          <strong>📝Nurse Aid:</strong> ${event.extendedProps.nursesaid || ''}
             <strong>📍Driver:</strong> ${event.extendedProps.driverName || ''}
         </span>
         <span class="ec-line">
@@ -288,6 +304,7 @@ async function printAppointmentTable() {
                     <td>${escapeHtml(event.extendedProps?.doctorName)}</td>
                     <td>${escapeHtml(event.extendedProps?.driverName)}</td>
                     <td>${escapeHtml(event.extendedProps?.wait)}</td>
+                     <td>${escapeHtml(event.extendedProps?.nursesaid)}</td>
                     <td>${escapeHtml(event.extendedProps?.doctorAddress)}</td>
                 </tr>
             `;
@@ -359,13 +376,14 @@ async function printAppointmentTable() {
             <table>
                 <thead>
                     <tr>
-                        <th>Day / Date</th>
+                        <th>Date</th>
                         <th>Depart Time</th>
                         <th>Appt Time</th>
                         <th>Resident</th>
                         <th>Doctor</th>
                         <th>Driver</th>
                         <th>Wait</th>
+                        <th>Aid</th>
                         <th>Address</th>
                     </tr>
                 </thead>
@@ -492,7 +510,7 @@ function formatDate(date) {
     return date.toLocaleDateString("en-US", {
         weekday: "long",
         year: "numeric",
-        month: "long",
+        month: "numeric",
         day: "numeric"
     });
 }

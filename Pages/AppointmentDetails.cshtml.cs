@@ -98,7 +98,9 @@ namespace Appointments.Pages
                             flag = inHouse ? false : true,
                             doctorName = d.DoctorName,
                             doctorAddress = d.Street+" "+d.City,
-                            driverName = d.DriverName
+                            driverName = d.DriverName,
+                            notes = d.Notes,
+                            nursesaid=d.NursesAideAccompaniment==true ? "Yes" : "No",
                             }
                         };
                 }).ToList();

@@ -6,7 +6,8 @@
 }
 
 
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@@event-calendar/build@3.12.0/event-calendar.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@@event-calendar/build@5.12.0/dist/event-calendar.min.css">
+
 <link href="~/css/calendarview.css" rel="stylesheet" asp-append-version="true" />
 
     <div id="calendar-controls" class="no-print">
@@ -27,37 +28,68 @@
     <div id="eventModal" class="modal-overlay">
         <div class="modal-content">
             <div class="modal-header">
-            <h2 id="m-title">Event Title</h2>          
+            <h2 id="m-title">Event Title</h2>
             </div>
             <div class="modal-body">
-                <table class="modal-table">
-                    <tr>
-                    <td class="label">Driver:</td>
-                    <td id="m-location"></td>
-                    </tr>
-                    <tr>
-                    <td class="label">Date:</td>
-                    <td id="m-date"></td>
-                    </tr>
-                    <tr>
-                    <td class="label">Depart Time:</td>
-                    <td id="m-start"></td>
-                    </tr>
-                    <tr>
-                    <td class="label">Appoint Time:</td>
-                    <td id="m-end"></td>
-                    </tr>
-                    <tr>
-                    <td class="label">Address:</td>
-                    <td id="m-description"></td>
-                    </tr>             
-                </table>
+            <!-- Changed from <table> to a responsive <div> grid container -->
+                <div class="modal-grid">
+
+                    <div class="grid-item full-width">
+                    <span class="label">Driver:</span>
+                    <span id="m-location"></span>
+                    </div>
+
+                    <div class="grid-item full-width">
+                    <span class="label">Doctor:</span>
+                    <span id="m-doctor"></span>
+                    </div>
+
+                    <div class="grid-item full-width">
+                    <span class="label">Date:</span>
+                    <span id="m-date"></span>
+                    </div>
+
+                <!-- These will automatically sit side-by-side on tablet/desktop -->
+                    <div class="grid-item">
+                    <span class="label">Depart Time:</span>
+                    <span id="m-start"></span>
+                    </div>
+                    <div class="grid-item">
+                    <span class="label">Appoint Time:</span>
+                    <span id="m-end"></span>
+                    </div>
+
+                <!-- These will automatically sit side-by-side on tablet/desktop -->
+                    <div class="grid-item">
+                    <span class="label">Wait:</span>
+                    <span id="m-wait"></span>
+                    </div>
+                    <div class="grid-item">
+                    <span class="label">Nurse Aid:</span>
+                    <span id="m-nurseaid"></span>
+                    </div>
+
+                    <div class="grid-item full-width">
+                    <span class="label">Address:</span>
+                    <span id="m-description"></span>
+                    </div>
+
+                @if(Model.IsAdmin)
+                    {
+                        <div class="grid-item full-width">
+                        <span class="label">Notes:</span>
+                        <span id="m-notes"></span>
+                        </div>
+                    }
+                </div>
             </div>
             <div class="modal-footer">
-            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <span class="close-btn" onclick="closeModal()">Close</span>
             </div>
         </div>
     </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@@event-calendar/build@@3.12.0/event-calendar.min.js"></script>
+
+
+<script src="https://cdn.jsdelivr.net/npm/@@event-calendar/build@5.12.0/dist/event-calendar.min.js"></script>
 <script src="~/js/driversappts.js" asp-append-version="true"></script>
