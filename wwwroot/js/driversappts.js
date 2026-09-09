@@ -9,12 +9,18 @@ let filteredData = null;
 
 document.addEventListener('DOMContentLoaded', function () {
     // Handle window resize to adjust calendar view
+    // window.addEventListener('resize', () => {
+    //     if (window.innerWidth < 700 && ec.getView().type === 'dayGridMonth') {
+    //         ec.setOption('view', 'listWeek');
+    //     }
+    // });
+
+    window.onresize = null;
     window.addEventListener('resize', () => {
         if (window.innerWidth < 700 && ec.getView().type === 'dayGridMonth') {
             ec.setOption('view', 'listWeek');
         }
-    });
-
+    })
     window.onclick = function (event) {
         if (event.target === modal) closeModal();
     };
@@ -180,6 +186,7 @@ function loadDriversScheduleCalendar() {
             document.getElementById('m-description').innerText = (escapeHtml(e.extendedProps.doctorAddress)) || ' ';
             document.getElementById('m-doctor').innerText = (escapeHtml(e.extendedProps.doctorName)) || ' ';
             document.getElementById('m-nurseaid').innerText = (escapeHtml(e.extendedProps.nursesaid)) || ' ';
+            console.log(e);
             document.getElementById('m-wait').innerText = (escapeHtml(e.extendedProps.wait)) || ' ';
             const safeMessage = (escapeHtml(e.extendedProps.notes)) || ' ';
             if (document.getElementById('m-notes')) {
@@ -188,7 +195,6 @@ function loadDriversScheduleCalendar() {
             modal.style.display = 'flex';
         }
     });
-
 }
 function newFunctiontest(fetchInfo, savedView) {
     const currentValue = document.getElementById("SharedMessage").value;

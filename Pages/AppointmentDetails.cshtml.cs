@@ -91,7 +91,7 @@ namespace Appointments.Pages
                             {
                             apptime = d.ApptTm,
                             nursenotes = d.Notes,
-                            wait = d.Wait==true ? "Yes" : "No",
+                            wait = d.Wait ? "Yes" : "No",
                             badgeText = inHouse ? "I" : "N",
                             badgeClass = inHouse ? "badge-danger" : "",
                             inhouse = inHouse,
@@ -100,7 +100,7 @@ namespace Appointments.Pages
                             doctorAddress = d.Street+" "+d.City,
                             driverName = d.DriverName,
                             notes = d.Notes,
-                            nursesaid=d.NursesAideAccompaniment==true ? "Yes" : "No",
+                            nursesaid = d.NursesAideAccompaniment==true ? "Yes" : "No",
                             }
                         };
                 }).ToList();
