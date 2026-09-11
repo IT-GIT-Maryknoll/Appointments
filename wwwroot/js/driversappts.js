@@ -8,13 +8,6 @@ let sortedList = null;
 let filteredData = null;
 
 document.addEventListener('DOMContentLoaded', function () {
-    // Handle window resize to adjust calendar view
-    // window.addEventListener('resize', () => {
-    //     if (window.innerWidth < 700 && ec.getView().type === 'dayGridMonth') {
-    //         ec.setOption('view', 'listWeek');
-    //     }
-    // });
-
     window.onresize = null;
     window.addEventListener('resize', () => {
         if (window.innerWidth < 700 && ec.getView().type === 'dayGridMonth') {
@@ -118,9 +111,9 @@ function loadDriversScheduleCalendar() {
                         console.log("Calendar is still warming up...");
                         return;
                     }
-                    var { startIso, endIso, currentValue, driverValue } = newFunctiontest(fetchInfo, savedView);
+                    var { startIso, endIso, currentValue } = newFunctiontest(fetchInfo, savedView);
 
-                    const url = `/AppointmentDetails?handler=Appointments&start=${encodeURIComponent(startIso)}&end=${encodeURIComponent(endIso)}&sharedMessage=${encodeURIComponent(currentValue)}&driverName=${encodeURIComponent(driverValue)}`;
+                    const url = `/AppointmentDetails?handler=Appointments&start=${encodeURIComponent(startIso)}&end=${encodeURIComponent(endIso)}&sharedMessage=${encodeURIComponent(currentValue)}`;
 
                     getAppDateDetails(fetchInfo, successCallback, url);
                 },
@@ -198,7 +191,6 @@ function loadDriversScheduleCalendar() {
 }
 function newFunctiontest(fetchInfo, savedView) {
     const currentValue = document.getElementById("SharedMessage").value;
-    const driverValue = document.getElementById("msgDriverName").value;
     let targetStart = new Date(fetchInfo.start);
     let targetEnd = new Date(fetchInfo.end);
     if (typeof ec !== 'undefined' && ec.getView) {
@@ -219,7 +211,7 @@ function newFunctiontest(fetchInfo, savedView) {
     }
     let startIso = targetStart.toISOString().split('T')[0]; // Format: YYYY-MM-DD
     let endIso = targetEnd.toISOString().split('T')[0];
-    return { startIso, endIso, currentValue, driverValue };
+    return { startIso, endIso, currentValue };
 }
 
 function closeModal() {
@@ -449,7 +441,7 @@ async function getAppDateDetailsForPrint() {
 
         // 4. Safely extract DOM values with fallbacks
         const sharedMessage = document.getElementById("SharedMessage")?.value || "";
-        const driverName = document.getElementById("msgDriverName")?.value || "";
+
         const isCheckboxChecked = document.getElementById("ShowInhouse")?.checked || false; // Assuming checkbox1 is an ID
 
         // 5. Build URL using URLSearchParams to handle automatic encoding
@@ -458,7 +450,6 @@ async function getAppDateDetailsForPrint() {
             start: startIso,
             end: endIso,
             sharedMessage: sharedMessage,
-            driverName: driverName
         });
 
         // 6. Fetch and handle response

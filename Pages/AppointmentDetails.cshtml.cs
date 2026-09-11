@@ -43,7 +43,7 @@ namespace Appointments.Pages
             sMask=ViewData["AppointmentDetailsAccessMask"]?.ToString()??"";
             }
 
-        public async Task<JsonResult> OnGetAppointments(string start,string end,bool sharedMessage,string driverName)
+        public async Task<JsonResult> OnGetAppointments(string start,string end,bool sharedMessage)
             {
             if(!DateTimeOffset.TryParse(start,CultureInfo.InvariantCulture,DateTimeStyles.AssumeUniversal,out var startDt)||
            !DateTimeOffset.TryParse(end,CultureInfo.InvariantCulture,DateTimeStyles.AssumeUniversal,out var endDt))
@@ -56,10 +56,7 @@ namespace Appointments.Pages
             sFilter=$"[ApptTime] >= '{startOfDayFilter:yyyy-MM-dd HH:mm:ss}' And [ApptTime] <= '{endofDayFilter:yyyy-MM-dd HH:mm:ss}'";
             sFilter=sFilter+"And [Status]='Booked'";
             sFilter=sFilter+"And [FullName] Is Not Null";
-            if(!sharedMessage)
-                {
-                sFilter+=$" And [DriverName] Like '%{driverName}%'";
-                }
+
             lstAppointments=_appointmentsData.LoadAppointments(sFilter,out string sMsg);
 
             if((TempData["Message"]==null||(TempData["Message"]?.ToString()?.Length??0)==0)&&sMsg!=null&&sMsg.Trim().Length>0)
